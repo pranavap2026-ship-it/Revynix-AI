@@ -74,7 +74,7 @@ const StatCard = ({
       border border-white/5
       bg-zinc-950/80
       backdrop-blur-xl
-      p-6
+      p-4 sm:p-6
       shadow-2xl
     "
   >
@@ -100,7 +100,7 @@ const StatCard = ({
 
           <h2
             className="
-              text-4xl font-black
+              text-3xl sm:text-4xl font-black
               mt-3 text-white
             "
           >
@@ -117,7 +117,7 @@ const StatCard = ({
 
         <div
           className="
-            w-14 h-14 rounded-2xl
+            w-12 h-12 sm:w-14 sm:h-14 rounded-2xl
             flex items-center justify-center
           "
           style={{
@@ -219,13 +219,15 @@ export default function DashboardPage() {
 
   return (
 
-    <div
-      className="
-        max-w-7xl mx-auto
-        px-4 py-8
-        text-white
-      "
-    >
+   <div
+  className="
+    max-w-7xl mx-auto
+    overflow-x-hidden
+    px-3 sm:px-4 md:px-6
+    py-5 sm:py-8
+    text-white
+  "
+>
 
       {/* ======================================== */}
       {/* HEADER */}
@@ -253,7 +255,7 @@ export default function DashboardPage() {
             border border-white/5
             bg-zinc-950/80
             backdrop-blur-xl
-            p-8 lg:p-10
+            p-5 sm:p-7 lg:p-10
             relative
           "
         >
@@ -273,10 +275,10 @@ export default function DashboardPage() {
           <div
             className="
               relative z-10
-              flex flex-col lg:flex-row
-              lg:items-center
-              justify-between
-              gap-8
+             flex flex-col lg:flex-row
+lg:items-center
+justify-between
+gap-6 lg:gap-8
             "
           >
 
@@ -302,7 +304,7 @@ export default function DashboardPage() {
 
               <h1
                 className="
-                  text-4xl md:text-6xl
+                  text-3xl sm:text-4xl md:text-5xl lg:text-6xl
                   font-black
                   leading-tight
                 "
@@ -330,7 +332,7 @@ export default function DashboardPage() {
                   text-zinc-400
                   mt-4
                   max-w-2xl
-                  leading-8
+                  leading-6 sm:leading-8
                 "
               >
 
@@ -342,7 +344,7 @@ export default function DashboardPage() {
 
             {/* ACTIONS */}
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
 
               <Link
                 to="/review"
@@ -397,9 +399,11 @@ export default function DashboardPage() {
 
       <div
         className="
-          grid sm:grid-cols-2
-          xl:grid-cols-4
-          gap-5 mb-10
+          grid grid-cols-1
+sm:grid-cols-2
+xl:grid-cols-4
+gap-4 sm:gap-5
+mb-8 sm:mb-10
         "
       >
 
@@ -444,8 +448,9 @@ export default function DashboardPage() {
 
       <div
         className="
-          grid xl:grid-cols-3
-          gap-6
+          grid grid-cols-1
+xl:grid-cols-3
+gap-5 sm:gap-6
         "
       >
 
@@ -461,7 +466,7 @@ export default function DashboardPage() {
               border border-white/5
               bg-zinc-950/80
               backdrop-blur-xl
-              p-6
+              p-4 sm:p-6
             "
           >
 
@@ -582,8 +587,10 @@ export default function DashboardPage() {
 
                         <div
                           className="
-                            flex items-center justify-between
-                            gap-4
+                            flex flex-col sm:flex-row
+sm:items-center
+justify-between
+gap-4
                           "
                         >
 
@@ -616,7 +623,8 @@ export default function DashboardPage() {
                               <h3
                                 className="
                                   font-semibold
-                                  truncate
+truncate
+text-sm sm:text-base
                                 "
                               >
                                 {review.title}
@@ -643,7 +651,7 @@ export default function DashboardPage() {
 
                           <div
                             className={`
-                              text-xl font-black
+                              text-lg sm:text-xl font-black
                               ${scoreColorClass(
                                 review.score
                               )}
@@ -688,13 +696,13 @@ export default function DashboardPage() {
               border border-white/5
               bg-zinc-950/80
               backdrop-blur-xl
-              p-6
+              p-4 sm:p-6
             "
           >
 
             <h2
               className="
-                text-2xl font-bold
+                text-xl sm:text-2xl font-bold
                 mb-6
                 flex items-center gap-2
               "
@@ -710,7 +718,7 @@ export default function DashboardPage() {
 
             </h2>
 
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
 
               <div
                 className="
@@ -769,7 +777,7 @@ export default function DashboardPage() {
               border border-white/5
               bg-zinc-950/80
               backdrop-blur-xl
-              p-6
+              p-4 sm:p-6
             "
           >
 
