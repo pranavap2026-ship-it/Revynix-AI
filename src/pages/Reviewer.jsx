@@ -78,10 +78,9 @@ export default function Reviewer() {
             }
           );
 
-        setResult(
-          response.data
-        );
-
+      setResult(
+  response.data.data.aiResponse
+);
         // AUTO SWITCH TO REVIEW ON MOBILE
 
         setMobileTab('review');
@@ -118,10 +117,10 @@ export default function Reviewer() {
 
         await navigator.clipboard.writeText(
           JSON.stringify(
-            result,
-            null,
-            2
-          )
+  result,
+  null,
+  2
+)
         );
 
         setCopied(true);
@@ -147,11 +146,8 @@ export default function Reviewer() {
   // SCORE
   // ========================================
 
-  const score =
-    result?.data?.score ||
-    result?.data?.aiResponse
-      ?.score ||
-    0;
+const score =
+  result?.score || 0;
 
 
     const isPreviewSupported = [
@@ -718,9 +714,7 @@ export default function Reviewer() {
 
                   <p className="text-zinc-300 leading-8">
                     {
-                      result?.data
-                        ?.aiResponse
-                        ?.summary
+                     result?.summary
                     }
                   </p>
 
@@ -873,9 +867,7 @@ export default function Reviewer() {
                       "
                     >
                       {
-                        result?.data
-                          ?.aiResponse
-                          ?.expectedOutput ||
+                       result?.expectedOutput||
 
                         'No output prediction available.'
                       }
@@ -895,15 +887,12 @@ export default function Reviewer() {
                     Bugs Detected
                   </h3>
 
-                  {result?.data
-                    ?.aiResponse?.bugs
+                  {result?.bugs
                     ?.length > 0 ? (
 
                     <div className="space-y-4">
 
-                      {result?.data
-                        ?.aiResponse?.bugs
-                        ?.map(
+                      {result?.bugs?.map(
                           (
                             bug,
                             index
