@@ -7,22 +7,25 @@ import toast from 'react-hot-toast';
 // ========================================
 
 const API_URL =
-  import.meta.env
-    .VITE_API_URL ||
-  'http://localhost:5000';
+
+  import.meta.env.VITE_API_URL ||
+
+  'http://localhost:5000/api';
 
 // ========================================
 // AXIOS INSTANCE
 // ========================================
 
 const API = axios.create({
-  baseURL: `${API_URL}/api`,
+
+  baseURL: API_URL,
 
   withCredentials: true,
 
   timeout: 30000,
 
   headers: {
+
     'Content-Type':
       'application/json',
   },
@@ -33,14 +36,22 @@ const API = axios.create({
 // ========================================
 
 API.interceptors.request.use(
+
   config => {
+
     const token =
+      localStorage.getItem(
+        'revynix_token'
+      ) ||
+
       localStorage.getItem(
         'devlens_token'
       );
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
     return config;
@@ -55,20 +66,23 @@ API.interceptors.request.use(
 // ========================================
 
 API.interceptors.response.use(
+
   response => response,
 
   error => {
+
     // ====================================
     // NETWORK ERROR
     // ====================================
 
     if (!error.response) {
+
       console.error(
         'SERVER CONNECTION FAILED'
       );
 
       toast.error(
-        'Backend server not running'
+        'Backend server unavailable'
       );
 
       return Promise.reject(
@@ -85,7 +99,18 @@ API.interceptors.response.use(
     // 401
     // ====================================
 
-    if (status === 401) {
+    if (
+      status === 401
+    ) {
+
+      localStorage.removeItem(
+        'revynix_token'
+      );
+
+      localStorage.removeItem(
+        'revynix_user'
+      );
+
       localStorage.removeItem(
         'devlens_token'
       );
@@ -98,6 +123,7 @@ API.interceptors.response.use(
         window.location.pathname !==
         '/login'
       ) {
+
         toast.error(
           'Session expired'
         );
@@ -114,9 +140,12 @@ API.interceptors.response.use(
     else if (
       status === 403
     ) {
+
       toast.error(
+
         data?.message ||
-          'Access denied'
+
+        'Access denied'
       );
     }
 
@@ -127,9 +156,28 @@ API.interceptors.response.use(
     else if (
       status === 404
     ) {
+
       toast.error(
+
         data?.message ||
-          'API route not found'
+
+        'API route not found'
+      );
+    }
+
+    // ====================================
+    // 429
+    // ====================================
+
+    else if (
+      status === 429
+    ) {
+
+      toast.error(
+
+        data?.message ||
+
+        'Too many requests'
       );
     }
 
@@ -140,9 +188,12 @@ API.interceptors.response.use(
     else if (
       status >= 500
     ) {
+
       toast.error(
+
         data?.message ||
-          'Internal server error'
+
+        'Internal server error'
       );
     }
 
@@ -157,6 +208,7 @@ API.interceptors.response.use(
 // ========================================
 
 export const AuthAPI = {
+
   register: data =>
     API.post(
       '/auth/register',
@@ -176,6 +228,12 @@ export const AuthAPI = {
     API.post(
       '/auth/logout'
     ),
+
+  updateProfile: data =>
+    API.put(
+      '/auth/profile',
+      data
+    ),
 };
 
 // ========================================
@@ -183,6 +241,7 @@ export const AuthAPI = {
 // ========================================
 
 export const UserAPI = {
+
   updateProfile: data =>
     API.put(
       '/users/profile',
@@ -201,6 +260,7 @@ export const UserAPI = {
 // ========================================
 
 export const ReviewAPI = {
+
   createReview: data =>
     API.post(
       '/reviews',
@@ -208,13 +268,26 @@ export const ReviewAPI = {
     ),
 
   getReviews: params =>
-    API.get('/reviews', {
-      params,
-    }),
+    API.get(
+      '/reviews',
+      {
+        params,
+      }
+    ),
 
   getReview: id =>
     API.get(
       `/reviews/${id}`
+    ),
+
+  getReviewById: id =>
+    API.get(
+      `/reviews/${id}`
+    ),
+
+  getMyReviews: () =>
+    API.get(
+      '/reviews/my'
     ),
 
   deleteReview: id =>
@@ -244,9 +317,7 @@ export const ReviewAPI = {
 
 export const AdminAPI = {
 
-  // ========================================
   // USERS
-  // ========================================
 
   getUsers: params =>
     API.get(
@@ -261,16 +332,15 @@ export const AdminAPI = {
       `/admin/users/${id}`
     ),
 
-  updateUserRole: (
-    id,
-    role
-  ) =>
-    API.patch(
-      `/admin/users/${id}/role`,
-      {
-        role,
-      }
-    ),
+  updateUserRole:
+    (
+      id,
+      role
+    ) =>
+      API.patch(
+        `/admin/users/${id}/role`,
+        { role }
+      ),
 
   blockUser: id =>
     API.patch(
@@ -282,9 +352,7 @@ export const AdminAPI = {
       `/admin/users/${id}/unblock`
     ),
 
-  // ========================================
   // STATS
-  // ========================================
 
   getPlatformStats:
     () =>
@@ -292,9 +360,7 @@ export const AdminAPI = {
         '/admin/stats'
       ),
 
-  // ========================================
   // REVIEWS
-  // ========================================
 
   getAllReviews:
     () =>
@@ -307,9 +373,7 @@ export const AdminAPI = {
       `/admin/reviews/${id}`
     ),
 
-  // ========================================
   // SETTINGS
-  // ========================================
 
   getSettings:
     () =>
@@ -324,9 +388,7 @@ export const AdminAPI = {
         data
       ),
 
-  // ========================================
   // HOMEPAGE CMS
-  // ========================================
 
   getHomePageContent:
     () =>
@@ -347,6 +409,7 @@ export const AdminAPI = {
 // ========================================
 
 export const GeneralAPI = {
+
   healthCheck: () =>
     API.get('/health'),
 
