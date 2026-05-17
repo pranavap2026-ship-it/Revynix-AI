@@ -197,6 +197,93 @@ export default function HomePage() {
       "
     >
 
+
+{/* MOBILE NAVBAR */}
+
+<div
+  className="
+    lg:hidden
+    fixed
+    top-0
+    left-0
+    right-0
+    z-[999]
+    border-b
+    border-white/10
+    bg-black/80
+    backdrop-blur-2xl
+    px-4
+    py-4
+  "
+>
+
+  <div
+    className="
+      flex
+      items-center
+      justify-between
+    "
+  >
+
+    {/* LOGO */}
+
+    <Link
+      to="/"
+      className="
+        text-xl
+        font-black
+        bg-gradient-to-r
+        from-cyan-400
+        to-violet-400
+        bg-clip-text
+        text-transparent
+      "
+    >
+      Revynix AI
+    </Link>
+
+    {/* ACTIONS */}
+
+    <div
+      className="
+        flex
+        items-center
+        gap-3
+      "
+    >
+
+      <Link
+        to={
+          user
+            ? '/dashboard'
+            : '/login'
+        }
+        className="
+          w-11
+          h-11
+          rounded-2xl
+          border
+          border-white/10
+          bg-white/[0.05]
+          flex
+          items-center
+          justify-center
+          active:scale-95
+          transition-all
+        "
+      >
+
+        <RiDashboardLine
+          size={20}
+        />
+
+      </Link>
+
+    </div>
+
+  </div>
+
+</div>
       {/* ======================================== */}
       {/* BACKGROUND */}
       {/* ======================================== */}
@@ -252,11 +339,13 @@ export default function HomePage() {
       <section
         className="
           relative
-          min-h-screen
-          flex items-center
-          justify-center
-          px-4
-          py-20
+         min-h-screen
+flex items-center
+justify-center
+px-4
+pt-32
+pb-20
+overflow-hidden
         "
       >
 
@@ -266,9 +355,11 @@ export default function HomePage() {
             max-w-7xl
             mx-auto
             grid
-            lg:grid-cols-2
-            gap-14
-            items-center
+grid-cols-1
+lg:grid-cols-2
+gap-10
+lg:gap-14
+items-center
           "
         >
 
@@ -321,8 +412,10 @@ export default function HomePage() {
 
             <h1
               className="
-                text-5xl
-                md:text-7xl
+                text-4xl
+sm:text-5xl
+md:text-6xl
+lg:text-7xl
                 font-black
                 leading-tight
               "
@@ -367,9 +460,11 @@ export default function HomePage() {
 
             <div
               className="
-                flex flex-wrap
-                gap-4
-                mt-10
+               flex
+flex-col
+sm:flex-row
+gap-4
+mt-10
               "
             >
 
@@ -380,17 +475,21 @@ export default function HomePage() {
                     : '/register'
                 }
                 className="
-                  px-8 py-4
-                  rounded-2xl
-                  bg-gradient-to-r
-                  from-cyan-500
-                  to-violet-500
-                  font-semibold
-                  flex items-center
-                  gap-2
-                  hover:scale-105
-                  transition-all
-                "
+  w-full
+  sm:w-auto
+  justify-center
+  px-8 py-4
+  rounded-2xl
+  bg-gradient-to-r
+  from-cyan-500
+  to-violet-500
+  font-semibold
+  flex
+  items-center
+  gap-2
+  hover:scale-105
+  transition-all
+"
               >
 
                 <RiRocketLine />
@@ -402,14 +501,18 @@ export default function HomePage() {
               <Link
                 to="/review"
                 className="
-                  px-8 py-4
-                  rounded-2xl
-                  border border-white/10
-                  bg-white/[0.03]
-                  font-semibold
-                  hover:bg-white/[0.06]
-                  transition-all
-                "
+  w-full
+  sm:w-auto
+  justify-center
+  px-8 py-4
+  rounded-2xl
+  border border-white/10
+  bg-white/[0.03]
+  font-semibold
+  flex
+  items-center
+  transition-all
+"
               >
 
                 Live Demo
@@ -430,8 +533,8 @@ export default function HomePage() {
 
               {[
                 ['10K+', 'Reviews'],
-                ['99%', 'Accuracy'],
-                ['50+', 'Languages'],
+                ['98%', 'Accuracy'],
+                ['10+', 'Languages'],
               ].map(
                 item => (
 
@@ -566,7 +669,103 @@ export default function HomePage() {
               </div>
 
             </div>
+<motion.div
 
+  initial={{
+    opacity: 0,
+    y: 20,
+  }}
+
+  animate={{
+    opacity: 1,
+    y: 0,
+  }}
+
+  transition={{
+    delay: 0.5,
+  }}
+
+  className="
+    mt-8
+    rounded-3xl
+    border
+    border-white/5
+    bg-white/[0.03]
+    backdrop-blur-xl
+    p-5
+  "
+>
+
+  <div
+    className="
+      flex
+      items-center
+      justify-between
+      mb-4
+    "
+  >
+
+    <div>
+
+      <p className="text-sm text-zinc-500">
+        Live AI Activity
+      </p>
+
+      <h3 className="font-bold mt-1">
+        1,284 Reviews Today
+      </h3>
+
+    </div>
+
+    <div
+      className="
+        w-3
+        h-3
+        rounded-full
+        bg-green-400
+        animate-pulse
+      "
+    />
+
+  </div>
+
+  <div className="space-y-3">
+
+    {[
+      'Security vulnerability fixed',
+      'Performance issue detected',
+      'Memory leak optimized',
+    ].map(item => (
+
+      <div
+        key={item}
+        className="
+          flex
+          items-center
+          gap-3
+          text-sm
+          text-zinc-300
+        "
+      >
+
+        <div
+          className="
+            w-2
+            h-2
+            rounded-full
+            bg-cyan-400
+          "
+        />
+
+        {item}
+
+      </div>
+
+    ))}
+
+  </div>
+
+</motion.div>
             {/* FLOATING CARD */}
 
             <motion.div
@@ -591,6 +790,8 @@ export default function HomePage() {
                 backdrop-blur-xl
               "
             >
+
+              
 
               <div
                 className="
@@ -687,13 +888,16 @@ export default function HomePage() {
         </motion.div>
 
         <div
-          className="
-            grid
-            sm:grid-cols-2
-            lg:grid-cols-3
-            gap-6
-          "
-        >
+  className="
+    grid
+    grid-cols-2
+    gap-3
+    sm:flex
+    sm:flex-wrap
+    sm:gap-8
+    mt-12
+  "
+>
 
           {FEATURES.map(
             (
@@ -716,13 +920,31 @@ export default function HomePage() {
                 }}
 
                 className="
-                  rounded-[2rem]
-                  border border-white/5
-                  bg-zinc-950/70
-                  backdrop-blur-xl
-                  p-7
-                "
+  group
+  relative
+  overflow-hidden
+  rounded-[2rem]
+  border border-white/5
+  bg-zinc-950/70
+  backdrop-blur-xl
+  p-6 sm:p-7
+"
               >
+
+                <div
+  className="
+    absolute
+    inset-0
+    opacity-0
+    group-hover:opacity-100
+    transition-all
+    duration-500
+  "
+  style={{
+    background:
+      `radial-gradient(circle at top right, ${feature.color}20, transparent 60%)`,
+  }}
+/>
 
                 <div
                   className="
@@ -920,8 +1142,10 @@ export default function HomePage() {
         <div
           className="
             grid
-            md:grid-cols-3
-            gap-6
+grid-cols-1
+sm:grid-cols-2
+lg:grid-cols-3
+gap-5 sm:gap-6
           "
         >
 
@@ -1028,7 +1252,9 @@ export default function HomePage() {
             bg-gradient-to-br
             from-cyan-500/10
             to-violet-500/10
-            p-12
+            p-6
+sm:p-10
+lg:p-12
             text-center
             backdrop-blur-xl
           "
@@ -1059,8 +1285,10 @@ export default function HomePage() {
 
           <h2
             className="
-              text-4xl
-              md:text-6xl
+              text-3xl
+sm:text-4xl
+md:text-5xl
+lg:text-6xl
               font-black
               leading-tight
             "
@@ -1132,12 +1360,89 @@ export default function HomePage() {
 
           </div>
 
+          <div
+  className="
+    flex
+    flex-wrap
+    justify-center
+    gap-3
+    mt-8
+  "
+>
+
+  {[
+    'SOC 2 Secure',
+    'AI Powered',
+    'Enterprise Ready',
+    '99.9% Uptime',
+  ].map(item => (
+
+    <div
+      key={item}
+      className="
+        px-4
+        py-2
+        rounded-full
+        border
+        border-white/10
+        bg-white/[0.03]
+        text-sm
+        text-zinc-300
+      "
+    >
+      {item}
+    </div>
+
+  ))}
+
+</div>
+
         </motion.div>
 
       </section>
 
       <Footer />
+{/* MOBILE AI BUTTON */}
 
+<motion.button
+
+  initial={{
+    opacity: 0,
+    scale: 0.8,
+  }}
+
+  animate={{
+    opacity: 1,
+    scale: 1,
+  }}
+
+  whileTap={{
+    scale: 0.95,
+  }}
+
+  className="
+    lg:hidden
+    fixed
+    bottom-6
+    right-5
+    z-50
+    w-16
+    h-16
+    rounded-full
+    bg-gradient-to-r
+    from-cyan-500
+    to-violet-500
+    shadow-2xl
+    shadow-cyan-500/30
+    flex
+    items-center
+    justify-center
+  "
+>
+
+  <RiFlashlightLine size={28} />
+
+</motion.button>
     </div>
   );
 }
