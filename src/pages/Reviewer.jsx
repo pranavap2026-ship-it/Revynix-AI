@@ -6,14 +6,32 @@ import toast from 'react-hot-toast';
 
 import api from '../utils/api';
 
+import jsPDF from 'jspdf';
+
+import html2canvas
+from 'html2canvas';
 import {
+
   RiSparklingLine,
+
   RiCodeSSlashLine,
+
   RiBugLine,
+
   RiShieldCheckLine,
+
   RiFlashlightLine,
+
   RiFileCopyLine,
+
   RiCheckLine,
+
+  RiShareLine,
+
+  RiDownloadLine,
+
+  RiBarChartBoxLine,
+
 } from 'react-icons/ri';
 
 import { motion } from 'framer-motion';
@@ -142,6 +160,235 @@ export default function Reviewer() {
       }
     };
 
+
+    // ========================================
+// SHARE REVIEW
+// ========================================
+
+const shareReview =
+  async () => {
+
+    try {
+
+      if (
+        navigator.share
+      ) {
+
+        await navigator.share({
+
+          title:
+            'Revynix AI Review',
+
+          text:
+            result?.summary,
+
+          url:
+            window.location.href,
+        });
+
+      } else {
+
+        await navigator.clipboard.writeText(
+          window.location.href
+        );
+
+        toast.success(
+          'Link copied'
+        );
+      }
+
+    } catch {
+
+      toast.error(
+        'Share failed'
+      );
+    }
+  };
+
+// ========================================
+// DOWNLOAD PDF
+// ========================================
+
+const downloadPDF =
+  () => {
+
+    try {
+
+      if (!result) {
+
+        toast.error(
+          'No review available'
+        );
+
+        return;
+      }
+
+      const pdf =
+        new jsPDF();
+
+      let y = 20;
+
+      const addLine =
+        (
+          text = ''
+        ) => {
+
+          const lines =
+            pdf.splitTextToSize(
+              text,
+              170
+            );
+
+          pdf.text(
+            lines,
+            20,
+            y
+          );
+
+          y +=
+            lines.length * 8;
+
+          // NEW PAGE
+
+          if (y > 270) {
+
+            pdf.addPage();
+
+            y = 20;
+          }
+        };
+
+      // TITLE
+
+      pdf.setFontSize(22);
+
+      pdf.text(
+        'Revynix AI Review',
+        20,
+        y
+      );
+
+      y += 15;
+
+      // SCORE
+
+      pdf.setFontSize(16);
+
+      addLine(
+        `Score: ${result.score}/100`
+      );
+
+      // SUMMARY
+
+      addLine(
+        `Summary: ${result.summary}`
+      );
+
+      // OUTPUT
+
+      addLine(
+        `Expected Output: ${result.expectedOutput}`
+      );
+
+      // BUGS
+
+      if (
+        result.bugs?.length
+      ) {
+
+        addLine(
+          'Bugs Detected:'
+        );
+
+        result.bugs.forEach(
+          (
+            bug,
+            index
+          ) => {
+
+            addLine(
+              `${index + 1}. Line ${bug.line}`
+            );
+
+            addLine(
+              `Severity: ${bug.severity}`
+            );
+
+            addLine(
+              `Description: ${bug.description}`
+            );
+
+            addLine(
+              `Fix: ${bug.fix}`
+            );
+
+            y += 5;
+          }
+        );
+      }
+
+      // COMPLEXITY
+
+      if (
+        result.complexity
+      ) {
+
+        addLine(
+          `Time Complexity: ${result.complexity.timeComplexity}`
+        );
+
+        addLine(
+          `Space Complexity: ${result.complexity.spaceComplexity}`
+        );
+      }
+
+      // FINAL VERDICT
+
+      if (
+        result.finalVerdict
+      ) {
+
+        addLine(
+          `Final Verdict: ${result.finalVerdict}`
+        );
+      }
+
+      // REFACTORED CODE
+
+      if (
+        result.refactoredCode
+      ) {
+
+        addLine(
+          'Refactored Code:'
+        );
+
+        addLine(
+          result.refactoredCode
+        );
+      }
+
+      pdf.save(
+        'revynix-review.pdf'
+      );
+
+      toast.success(
+        'PDF downloaded'
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+      toast.error(
+        'PDF generation failed'
+      );
+    }
+  };
   // ========================================
   // SCORE
   // ========================================
@@ -500,7 +747,10 @@ const score =
 
           {/* BUTTON */}
 
-          <div className="p-5">
+          <div
+  id="review-content"
+  className="
+    p-5">
 
             <button
               onClick={handleReview}
@@ -582,31 +832,64 @@ const score =
 
             {result && (
 
-              <button
-                onClick={copyResult}
-                className="
-                  flex items-center gap-2
-                  px-4 py-2 rounded-xl
-                  bg-white/5 hover:bg-white/10
-                  text-sm transition-all
-                "
-              >
+  <div className="flex items-center gap-2">
 
-                {copied ? (
-                  <>
-                    <RiCheckLine />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <RiFileCopyLine />
-                    Copy
-                  </>
-                )}
+    {/* SHARE */}
 
-              </button>
+    <button
+      onClick={shareReview}
+      className="
+        p-2 rounded-xl
+        bg-cyan-500/10
+        hover:bg-cyan-500/20
+        transition-all
+      "
+    >
+      <RiShareLine />
+    </button>
 
-            )}
+    {/* PDF */}
+
+    <button
+      onClick={downloadPDF}
+      className="
+        p-2 rounded-xl
+        bg-violet-500/10
+        hover:bg-violet-500/20
+        transition-all
+      "
+    >
+      <RiDownloadLine />
+    </button>
+
+    {/* COPY */}
+
+    <button
+      onClick={copyResult}
+      className="
+        flex items-center gap-2
+        px-4 py-2 rounded-xl
+        bg-white/5 hover:bg-white/10
+        text-sm transition-all
+      "
+    >
+
+      {copied ? (
+        <>
+          <RiCheckLine />
+          Copied
+        </>
+      ) : (
+        <>
+          <RiFileCopyLine />
+          Copy
+        </>
+      )}
+
+    </button>
+
+  </div>
+)}
 
           </div>
 
@@ -997,6 +1280,228 @@ const score =
 
                 </div>
 
+
+{/* FINAL VERDICT */}
+
+{
+  result?.finalVerdict && (
+
+    <div
+      className="
+        rounded-3xl
+        border border-cyan-500/20
+        bg-gradient-to-r
+        from-violet-500/10
+        to-cyan-500/10
+        p-6
+      "
+    >
+
+      <h3 className="text-2xl font-bold mb-3">
+        Final Verdict
+      </h3>
+
+      <p className="text-zinc-300 leading-8 text-lg">
+        {result.finalVerdict}
+      </p>
+
+    </div>
+  )
+}
+
+{/* CODE QUALITY */}
+
+{
+  result?.codeQuality && (
+
+    <div
+      className="
+        rounded-3xl
+        border border-white/5
+        bg-white/[0.03]
+        p-6
+      "
+    >
+
+      <div className="flex items-center gap-3 mb-6">
+
+        <RiBarChartBoxLine
+          className="
+            text-cyan-400
+            text-2xl
+          "
+        />
+
+        <h3 className="text-xl font-bold">
+          Code Quality
+        </h3>
+
+      </div>
+
+      {
+        Object.entries(
+          result.codeQuality
+        ).map(
+          (
+            [key, value]
+          ) => (
+
+            <div
+              key={key}
+              className="mb-5"
+            >
+
+              <div className="flex justify-between mb-2">
+
+                <span className="capitalize">
+                  {key}
+                </span>
+
+                <span>
+                  {value}%
+                </span>
+
+              </div>
+
+              <div
+                className="
+                  h-3 rounded-full
+                  bg-zinc-800
+                  overflow-hidden
+                "
+              >
+
+                <div
+                  className="
+                    h-full rounded-full
+                    bg-gradient-to-r
+                    from-violet-500
+                    to-cyan-400
+                  "
+                  style={{
+                    width: `${value}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+          )
+        )
+      }
+
+    </div>
+  )
+}
+
+{/* COMPLEXITY */}
+
+{
+  result?.complexity && (
+
+    <div
+      className="
+        rounded-3xl
+        border border-violet-500/20
+        bg-violet-500/[0.04]
+        p-6
+      "
+    >
+
+      <h3 className="text-xl font-bold mb-5">
+        Complexity Analysis
+      </h3>
+
+      <div className="grid grid-cols-2 gap-5">
+
+        <div>
+
+          <p className="text-zinc-500 text-sm">
+            Time Complexity
+          </p>
+
+          <h4 className="text-2xl font-bold mt-1">
+            {
+              result.complexity
+                ?.timeComplexity
+            }
+          </h4>
+
+        </div>
+
+        <div>
+
+          <p className="text-zinc-500 text-sm">
+            Space Complexity
+          </p>
+
+          <h4 className="text-2xl font-bold mt-1">
+            {
+              result.complexity
+                ?.spaceComplexity
+            }
+          </h4>
+
+        </div>
+
+      </div>
+
+      <p className="mt-5 text-zinc-300 leading-7">
+        {
+          result.complexity
+            ?.description
+        }
+      </p>
+
+    </div>
+  )
+}
+
+{/* REFACTORED CODE */}
+
+{
+  result?.refactoredCode && (
+
+    <div
+      className="
+        rounded-3xl
+        border border-green-500/20
+        overflow-hidden
+      "
+    >
+
+      <div
+        className="
+          px-5 py-4
+          border-b border-green-500/10
+          bg-green-500/[0.03]
+        "
+      >
+
+        <h3 className="text-xl font-bold">
+          Refactored Code
+        </h3>
+
+      </div>
+
+      <Editor
+        height="300px"
+        language={language}
+        theme="vs-dark"
+        value={
+          result.refactoredCode
+        }
+        options={{
+          readOnly: true,
+          minimap: {
+            enabled: false,
+          },
+        }}
+      />
+
+    </div>
+  )
+}
               </>
 
             )}
