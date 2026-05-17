@@ -188,14 +188,15 @@ setSettings(
     return (
 
       <div
-        className="
-          min-h-screen
-          bg-black
-          flex
-          items-center
-          justify-center
-          text-white
-        "
+       className="
+  min-h-screen
+  bg-black
+  text-white
+  flex
+  flex-col
+  lg:flex-row
+  overflow-x-hidden
+"
       >
 
         <div
@@ -349,7 +350,127 @@ setSettings(
       {/* MAIN */}
       {/* ======================================== */}
 
-      <main className="flex-1 p-6">
+{/* MOBILE BOTTOM NAVBAR */}
+
+<div
+  className="
+    lg:hidden
+    fixed
+    bottom-0
+    left-0
+    right-0
+    z-50
+    bg-zinc-950/95
+    backdrop-blur-xl
+    border-t
+    border-white/5
+    px-2
+    py-3
+    safe-area-pb
+  "
+>
+
+  <div
+    className="
+      grid
+      grid-cols-4
+      gap-2
+    "
+  >
+
+    {[
+      [
+        'dashboard',
+        'Dashboard',
+        <RiDashboardLine size={20} />,
+      ],
+
+      [
+        'users',
+        'Users',
+        <RiUser3Line size={20} />,
+      ],
+
+      [
+        'analytics',
+        'Analytics',
+        <RiBarChartBoxLine size={20} />,
+      ],
+
+      [
+        'settings',
+        'Settings',
+        <RiSettings4Line size={20} />,
+      ],
+    ].map(item => (
+
+      <button
+        key={item[0]}
+
+        onClick={() =>
+          setActiveSection(item[0])
+        }
+
+        className={`
+          flex
+          flex-col
+          items-center
+          justify-center
+          gap-1
+          py-2
+          rounded-2xl
+          transition-all
+          duration-300
+
+          ${
+            activeSection === item[0]
+
+              ? `
+                bg-gradient-to-r
+                from-cyan-500
+                to-violet-500
+                text-white
+                shadow-lg
+                shadow-cyan-500/20
+              `
+
+              : `
+                text-zinc-500
+                hover:bg-white/[0.03]
+              `
+          }
+        `}
+      >
+
+        {item[2]}
+
+        <span
+          className="
+            text-[11px]
+            font-medium
+          "
+        >
+          {item[1]}
+        </span>
+
+      </button>
+
+    ))}
+
+  </div>
+
+</div>
+
+
+      <main
+  className="
+    flex-1
+    p-4
+    sm:p-6
+    pb-28
+    lg:pb-6
+  "
+>
 
         {/* HEADER */}
 
@@ -357,7 +478,9 @@ setSettings(
 
           <h1
             className="
-              text-5xl
+              text-3xl
+sm:text-4xl
+lg:text-5xl
               font-black
             "
           >
@@ -382,9 +505,11 @@ setSettings(
             <div
               className="
                 grid
-                md:grid-cols-2
-                xl:grid-cols-4
-                gap-6
+grid-cols-1
+sm:grid-cols-2
+xl:grid-cols-4
+gap-4
+sm:gap-6
               "
             >
 
@@ -468,18 +593,18 @@ setSettings(
                       border
                       border-white/5
                       bg-zinc-950
-                      p-6
+                      p-4 sm:p-6
                     "
                   >
 
                     <div
                       className="
-                        flex
-                        flex-col
-                        xl:flex-row
-                        xl:items-center
-                        xl:justify-between
-                        gap-6
+                       flex
+flex-col
+2xl:flex-row
+2xl:items-center
+2xl:justify-between
+gap-5
                       "
                     >
 
@@ -488,8 +613,10 @@ setSettings(
                       <div
                         className="
                           flex
-                          items-start
-                          gap-5
+flex-col
+sm:flex-row
+items-start
+gap-4 sm:gap-5
                         "
                       >
 
@@ -497,13 +624,16 @@ setSettings(
 
                         <div
                           className="
-                            w-16
-                            h-16
+                            w-14
+h-14
+sm:w-16
+sm:h-16
                             rounded-2xl
                             flex
                             items-center
                             justify-center
-                            text-2xl
+                            text-xl
+sm:text-2xl
                             font-black
                             text-white
                           "
@@ -583,9 +713,10 @@ setSettings(
                           <div
                             className="
                               grid
-                              md:grid-cols-2
-                              gap-3
-                              mt-4
+grid-cols-1
+sm:grid-cols-2
+gap-3
+mt-4
                             "
                           >
 
@@ -656,22 +787,27 @@ setSettings(
                       <div
                         className="
                           flex
-                          items-center
-                          gap-3
+flex-col
+sm:flex-row
+w-full
+sm:w-auto
+gap-3
                         "
                       >
 
                         <button
                           className="
-                            h-12
-                            px-5
-                            rounded-2xl
-                            bg-cyan-500/10
-                            text-cyan-400
-                            flex
-                            items-center
-                            gap-2
-                          "
+  h-11 sm:h-12
+  w-full sm:w-auto
+  px-4 sm:px-5
+  rounded-2xl
+  bg-cyan-500/10
+  text-cyan-400
+  flex
+  items-center
+  justify-center
+  gap-2
+"
                         >
 
                           <RiEyeLine />
@@ -687,15 +823,17 @@ setSettings(
                             )
                           }
                           className="
-                            h-12
-                            px-5
-                            rounded-2xl
-                            bg-red-500/10
-                            text-red-400
-                            flex
-                            items-center
-                            gap-2
-                          "
+  h-11 sm:h-12
+  w-full sm:w-auto
+  px-4 sm:px-5
+  rounded-2xl
+  bg-red-500/10
+  text-red-400
+  flex
+  items-center
+  justify-center
+  gap-2
+"
                         >
 
                           <RiDeleteBinLine />
@@ -763,7 +901,9 @@ setSettings(
                     <div
                       className="
                         flex
-                        justify-between
+items-start
+justify-between
+gap-4
                       "
                     >
 
@@ -862,8 +1002,9 @@ setSettings(
                   <div
                     className="
                       grid
-                      md:grid-cols-2
-                      gap-5
+grid-cols-1
+md:grid-cols-2
+gap-4 sm:gap-5
                     "
                   >
 
@@ -1137,8 +1278,10 @@ setSettings(
                   <div
                     className="
                       grid
-                      md:grid-cols-3
-                      gap-5
+grid-cols-1
+sm:grid-cols-2
+xl:grid-cols-3
+gap-4 sm:gap-5
                     "
                   >
 
@@ -1216,13 +1359,15 @@ function SectionCard({
         border
         border-white/5
         bg-zinc-950
-        p-8
+        p-4 sm:p-6 lg:p-8
       "
     >
 
       <h2
         className="
-          text-4xl
+          text-2xl
+sm:text-3xl
+lg:text-4xl
           font-black
           mb-8
         "
@@ -1258,7 +1403,7 @@ function StatCard({
         border
         border-white/5
         bg-zinc-950
-        p-8
+        p-5 sm:p-8
       "
     >
 
@@ -1268,7 +1413,9 @@ function StatCard({
 
       <h2
         className="
-          text-5xl
+          text-3xl
+sm:text-4xl
+lg:text-5xl
           font-black
           mt-4
         "
@@ -1345,9 +1492,11 @@ function SettingToggle({
     <div
       className="
         flex
-        items-center
-        justify-between
-        gap-5
+flex-col
+sm:flex-row
+sm:items-center
+justify-between
+gap-5
         border
         border-white/5
         rounded-2xl
@@ -1470,7 +1619,7 @@ function SystemCard({
 
 const inputClass = `
   w-full
-  h-14
+  h-12 sm:h-14
   rounded-2xl
   bg-black
   border
