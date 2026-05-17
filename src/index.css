@@ -1,0 +1,396 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======================================== */
+/* ROOT */
+/* ======================================== */
+
+:root {
+  --color-bg: #080c10;
+
+  --color-surface: #111827;
+
+  --color-border: rgba(
+    255,
+    255,
+    255,
+    0.08
+  );
+
+  --color-brand: #1aae9d;
+
+  --color-brand-light: #71e0cf;
+
+  --color-text: #f3f4f6;
+
+  --color-text-muted: #94a3b8;
+}
+
+/* ======================================== */
+/* GLOBAL */
+/* ======================================== */
+
+* {
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+
+  color: var(--color-text);
+
+  font-family:
+    Inter,
+    sans-serif;
+
+  overflow-x: hidden;
+}
+
+/* ======================================== */
+/* SCROLLBAR */
+/* ======================================== */
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1aae9d;
+}
+
+/* ======================================== */
+/* CARD */
+/* ======================================== */
+
+.card {
+  background: rgba(
+    17,
+    24,
+    39,
+    0.9
+  );
+
+  border: 1px solid
+    var(--color-border);
+
+  border-radius: 20px;
+
+  padding: 24px;
+
+  backdrop-filter: blur(10px);
+}
+
+/* ======================================== */
+/* BUTTONS */
+/* ======================================== */
+
+.btn-primary {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  border-radius: 14px;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+
+  background: linear-gradient(
+    135deg,
+    #1aae9d,
+    #12917f
+  );
+
+  color: white;
+
+  border: none;
+
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 0 30px
+    rgba(
+      26,
+      174,
+      157,
+      0.35
+    );
+}
+
+.btn-secondary {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  border-radius: 14px;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.05
+  );
+
+  border: 1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  color: white;
+
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.1
+  );
+}
+
+.btn-danger {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  border-radius: 14px;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+
+  background: rgba(
+    239,
+    68,
+    68,
+    0.1
+  );
+
+  border: 1px solid
+    rgba(
+      239,
+      68,
+      68,
+      0.2
+    );
+
+  color: #ef4444;
+
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: rgba(
+    239,
+    68,
+    68,
+    0.18
+  );
+}
+
+/* ======================================== */
+/* INPUT */
+/* ======================================== */
+
+.input {
+  width: 100%;
+
+  padding: 12px 16px;
+
+  border-radius: 14px;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.04
+  );
+
+  border: 1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  color: white;
+
+  outline: none;
+
+  transition: 0.2s ease;
+}
+
+.input:focus {
+  border-color: #1aae9d;
+
+  box-shadow: 0 0 0 4px
+    rgba(
+      26,
+      174,
+      157,
+      0.12
+    );
+}
+
+/* ======================================== */
+/* BADGES */
+/* ======================================== */
+
+.badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 4px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.badge-info {
+  background: rgba(
+    59,
+    130,
+    246,
+    0.12
+  );
+
+  color: #60a5fa;
+}
+
+.badge-high {
+  background: rgba(
+    251,
+    146,
+    60,
+    0.12
+  );
+
+  color: #fb923c;
+}
+
+.badge-low {
+  background: rgba(
+    74,
+    222,
+    128,
+    0.12
+  );
+
+  color: #4ade80;
+}
+
+.badge-critical {
+  background: rgba(
+    239,
+    68,
+    68,
+    0.12
+  );
+
+  color: #f87171;
+}
+
+/* ======================================== */
+/* TEXT */
+/* ======================================== */
+
+.glow-text {
+  background: linear-gradient(
+    135deg,
+    #1aae9d,
+    #71e0cf
+  );
+
+  background-clip: text;
+-webkit-background-clip: text;
+
+color: transparent;
+-webkit-text-fill-color: transparent;
+}
+
+/* ======================================== */
+/* ANIMATIONS */
+/* ======================================== */
+
+.animate-float {
+  animation: float 4s
+    ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(
+      -10px
+    );
+  }
+}
+
+/* ======================================== */
+/* MONACO */
+/* ======================================== */
+
+.monaco-editor,
+.monaco-editor-background {
+  background: #080c10 !important;
+}
