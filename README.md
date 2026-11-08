@@ -1,52 +1,138 @@
+# 🚀 DevLens AI — Frontend
 
-DevLens AI — Frontend
-<p align="center"> <strong>AI-Powered Code Review Platform</strong><br /> Review source code, identify potential issues, and get actionable improvement suggestions. </p><p align="center"> <a href="https://revynix-ai.vercel.app/">Live Application</a> · <a href="https://github.com/pranavap2026-ship-it/Revynix-AI-backend">Backend Repository</a> </p>
-Overview
-DevLens AI is a web-based AI-assisted code review platform. It helps developers inspect source code and understand potential improvements through structured feedback, including possible bugs, security concerns, performance issues, code-quality recommendations, and refactoring suggestions.
+<p align="center">
+  <strong>AI-Powered Code Review Platform</strong>
+  <br />
+  Analyze source code, identify potential bugs and security issues, and receive actionable AI-powered improvement suggestions.
+</p>
 
-This repository contains the client-side application, built with React and Vite. It provides the user interface for authentication, code submission, AI review results, review history, user profiles, and administration. The frontend communicates with the separate DevLens AI backend through an API service.
+<p align="center">
+  <a href="https://revynix-ai.vercel.app/">🌐 Live Application</a> •
+  <a href="https://github.com/pranavap2026-ship-it/Revynix-AI">💻 Frontend Repository</a> •
+  <a href="https://github.com/pranavap2026-ship-it/Revynix-AI-backend">⚙️ Backend Repository</a>
+</p>
 
-Live Demo
+---
+
+## 📌 Overview
+
+**DevLens AI** is a web-based AI-assisted code review platform designed to help developers analyze source code and improve software quality.
+
+The platform provides structured AI-generated feedback to help developers identify:
+
+- Potential bugs and logical errors.
+- Security vulnerabilities.
+- Performance issues.
+- Code quality problems.
+- Refactoring opportunities.
+- Suggestions for improving code readability and maintainability.
+
+This repository contains the **frontend application**, developed using React.js and Vite. It provides an interactive interface for authentication, code submission, AI-powered reviews, review history, user profiles, and administrative management.
+
+The frontend communicates with a separate Node.js and Express backend through API services.
+
+## 🌐 Live Demo
+
+**Live Application:**  
 https://revynix-ai.vercel.app/
 
 The application requires the backend API to be available and correctly configured.
 
-Features
-AI code review interface — submit source code for AI-powered analysis.
-Code editor — edit and prepare code for review using the Monaco Editor integration.
-Review results — inspect structured feedback and recommendations returned by the backend.
-Review history — revisit previous code reviews.
-Review details — open an individual review and examine its analysis.
-Dashboard — view the user's review activity and related information.
-Authentication — register, log in, and access protected application pages.
-Protected routes — restrict authenticated and administrative pages.
-Admin panel — provide an administrative interface for platform management.
-Profile management — view and manage user profile information.
-Responsive layout — support desktop and mobile browsing.
-Theme controls — switch the application's visual theme.
-Reusable UI components — shared navigation, sidebar, loading, toast, score, and review components.
-Technology Stack
-Area	Technologies
-Frontend framework	React
-Build tool	Vite
-Routing	React Router
-Code editor	Monaco Editor
-API communication	Axios
-Styling	CSS, Tailwind CSS
-Animation	Framer Motion
-Icons	React Icons
-Notifications	React Hot Toast
-PDF/export utilities	jsPDF, html2canvas
-Deployment	Vercel
-Refer to package.json for the exact dependency versions and available npm scripts.
+---
 
-Project Structure
+## ✨ Features
+
+### 🤖 AI-Powered Code Review
+- Submit source code for AI-assisted analysis.
+- Receive structured code review feedback.
+- Identify potential bugs, security concerns, and performance issues.
+- Get actionable code improvement recommendations.
+
+### 💻 Code Editor
+- Integrated Monaco Editor.
+- Edit and prepare source code before submitting it for review.
+- Improved code editing experience.
+
+### 📊 Dashboard
+- View review activity and related information.
+- Access important platform features from a centralized interface.
+
+### 📜 Review History
+- Browse previously submitted code reviews.
+- Revisit previous analysis results.
+- Access individual review details.
+
+### 🔐 Authentication & Authorization
+- User registration and login.
+- Protected application routes.
+- Authentication context management.
+- Role-based access to administrative functionality.
+
+### 🛡️ Admin Panel
+- Administrative interface for platform management.
+- Access restricted administrative features.
+
+### 👤 Profile Management
+- View and manage user profile information.
+- Access personal account details.
+
+### 🎨 User Interface
+- Responsive desktop and mobile layouts.
+- Theme switching functionality.
+- Animated interface elements.
+- Reusable UI components.
+- Loading indicators and toast notifications.
+
+### 📄 PDF Export
+- Export supported review information as PDF documents.
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Frontend Framework | React.js |
+| Build Tool | Vite |
+| Programming Language | JavaScript |
+| Routing | React Router |
+| Code Editor | Monaco Editor |
+| API Communication | Axios |
+| Styling | CSS, Tailwind CSS |
+| Animations | Framer Motion |
+| Icons | React Icons |
+| Notifications | React Hot Toast |
+| PDF Generation | jsPDF, html2canvas |
+| Deployment | Vercel |
+
+Refer to `package.json` for the exact dependency versions and available npm scripts.
+
+---
+
+## 🏗️ Project Architecture
+
+The application follows a component-based frontend architecture.
+
+- **Components:** Reusable UI elements and route protection.
+- **Context:** Global authentication state management.
+- **Hooks:** Reusable React hooks.
+- **Layouts:** Shared application layouts.
+- **Pages:** Application screens and user-facing features.
+- **Services:** Backend API communication.
+- **Utils:** Helper functions and supporting utilities.
+
+### 📁 Project Structure
+
+```text
 client/
 ├── public/
 ├── src/
 │   ├── assets/
+│   │
 │   ├── components/
 │   │   ├── AdminRoute.jsx
+│   │   ├── AuthField.jsx
+│   │   ├── AuthLayout.jsx
 │   │   ├── Footer.jsx
 │   │   ├── Loader.jsx
 │   │   ├── Navbar.jsx
@@ -57,12 +143,16 @@ client/
 │   │   ├── Sidebar.jsx
 │   │   ├── ThemeToggle.jsx
 │   │   └── Toast.jsx
+│   │
 │   ├── context/
 │   │   └── AuthContext.jsx
+│   │
 │   ├── hooks/
 │   │   └── useAuth.js
+│   │
 │   ├── layouts/
 │   │   └── DashboardLayout.jsx
+│   │
 │   ├── pages/
 │   │   ├── AdminPanel.jsx
 │   │   ├── Dashboard.jsx
@@ -75,16 +165,19 @@ client/
 │   │   ├── ReviewDetails.jsx
 │   │   ├── ReviewEditor.jsx
 │   │   └── Reviewer.jsx
+│   │
 │   ├── services/
+│   │
 │   ├── utils/
 │   │   ├── api.js
 │   │   ├── helpers.js
 │   │   └── pdfExport.js
+│   │
 │   ├── App.css
 │   ├── App.jsx
 │   ├── index.css
 │   └── main.jsx
-├── .env
+│
 ├── .gitignore
 ├── eslint.config.js
 ├── index.html
@@ -95,72 +188,170 @@ client/
 ├── tailwind.config.js
 ├── vercel.json
 └── vite.config.js
-The tree highlights the files visible in the supplied project structure. Additional files may exist in folders such as services, assets, and public.
+```
 
-Getting Started
-Prerequisites
-Node.js (LTS recommended)
-npm
-A running DevLens AI backend API
-1. Clone the frontend repository
-git clone <YOUR-FRONTEND-REPOSITORY-URL>
-cd <YOUR-FRONTEND-REPOSITORY-FOLDER>
-2. Install dependencies
+*Note: This structure highlights the main application files. Additional files may exist in the project.*
+
+---
+
+## ⚙️ Getting Started
+
+Follow these instructions to run the frontend application locally.
+
+### Prerequisites
+
+Make sure you have installed:
+
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- npm
+- Git
+- A running DevLens AI backend API
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/pranavap2026-ship-it/Revynix-AI.git
+```
+
+### 2. Navigate to the Project Directory
+
+```bash
+cd Revynix-AI/client
+```
+
+If the repository contains only the frontend application, navigate directly to the cloned repository directory instead.
+
+### 3. Install Dependencies
+
+```bash
 npm install
-3. Configure the API URL
-Create a local .env file in the client directory and configure the API base URL expected by src/utils/api.js.
+```
 
-For example, if the API service reads VITE_API_URL:
+### 4. Configure Environment Variables
 
+Create a `.env` file in the frontend project root.
+
+Configure the API base URL using the exact environment variable expected by `src/utils/api.js`.
+
+Example:
+
+```env
 VITE_API_URL=http://localhost:5000/api
-Use the exact variable name and URL format expected by your src/utils/api.js implementation. For production, set it to your deployed backend API URL.
+```
 
-Security: Vite exposes variables prefixed with VITE_ in the browser bundle. Do not put database credentials, private API keys, JWT signing secrets, or other server-side secrets in frontend environment variables.
+**Important:** `VITE_API_URL` is an example. Check `src/utils/api.js` and use the actual variable name and URL format implemented in the project.
 
-4. Start the development server
+For production, configure the deployed backend API URL in your Vercel project environment variables.
+
+> **Security:** Vite exposes variables prefixed with `VITE_` to the browser. Never store database credentials, private API keys, JWT secrets, or other server-side secrets in frontend environment variables.
+
+### 5. Start the Development Server
+
+```bash
 npm run dev
-Vite prints the local development URL in the terminal (commonly http://localhost:5173).
+```
 
-5. Build for production
+Vite will display the local development URL in the terminal. The default is usually:
+
+```text
+http://localhost:5173
+```
+
+### 6. Build for Production
+
+```bash
 npm run build
-To preview the production build locally:
+```
 
+### 7. Preview the Production Build
+
+```bash
 npm run preview
-Backend Integration
-The frontend communicates with the separate backend repository:
+```
 
-DevLens AI Backend
+---
 
-The backend is responsible for server-side operations such as authentication, authorization, database access, and AI code-review processing. The frontend API configuration is maintained in:
+## 🔗 Backend Integration
 
+The frontend communicates with a separate backend application.
+
+**Backend Repository:**  
+https://github.com/pranavap2026-ship-it/Revynix-AI-backend
+
+The backend is responsible for:
+
+- User authentication and authorization.
+- Database operations.
+- Code review processing.
+- AI service integration.
+- Review history management.
+- User and administrative operations.
+
+The frontend API configuration is maintained in:
+
+```text
 src/utils/api.js
-Check that file for the actual API base URL, request configuration, and token handling used by this client.
+```
 
-Deployment
-The frontend is deployed on Vercel.
+Ensure that the API base URL is configured correctly and that the backend allows requests from the deployed frontend domain.
 
-For deployment:
+---
 
-Import the frontend repository into Vercel.
-Set the project root to the frontend repository root.
-Configure the frontend API environment variable to point to the deployed backend.
-Use npm run build as the build command.
-Use dist as the output directory.
-Configure the backend CORS policy to allow the deployed frontend domain.
-The repository includes a vercel.json file for deployment configuration.
+## ☁️ Deployment
 
-Security and Repository Hygiene
-Keep .env files out of Git.
-Commit a sanitized .env.example only if the project needs to document environment-variable names.
-Never store server secrets in frontend code.
-Do not commit node_modules, build output, or local editor files.
-Use HTTPS for production API communication.
-Author
-Pranav A. P.
+The frontend application is deployed using **Vercel**.
+
+**Live URL:**  
+https://revynix-ai.vercel.app/
+
+### Deployment Steps
+
+1. Import the frontend GitHub repository into Vercel.
+2. Configure the project root directory.
+3. Set the appropriate environment variables.
+4. Use the following build configuration:
+
+| Setting | Value |
+|---|---|
+| Framework | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+5. Configure the backend API URL for production.
+6. Ensure the backend CORS configuration allows the frontend domain.
+7. Deploy the application.
+
+The repository includes a `vercel.json` file for deployment configuration.
+
+---
+
+## 🔒 Security & Best Practices
+
+- Keep `.env` files out of version control.
+- Never expose private API keys or server-side secrets in frontend code.
+- Use `.env.example` to document required environment variables without including secret values.
+- Do not commit `node_modules` or production build output.
+- Configure appropriate authentication and authorization checks.
+- Use HTTPS for production API communication.
+- Keep project dependencies updated.
+
+---
+
+## 👨‍💻 Author
+
+**Pranav A. P.**  
 B.Tech — Computer Science and Engineering
 
-GitHub: @pranavap2026-ship-it
-Live Project: DevLens AI
-Backend Repository: Revynix-AI-backend
-DevLens AI — making code review more accessible, understandable, and actionable.
+- **GitHub:** [@pranavap2026-ship-it](https://github.com/pranavap2026-ship-it)
+- **Frontend Repository:** [Revynix-AI](https://github.com/pranavap2026-ship-it/Revynix-AI)
+- **Backend Repository:** [Revynix-AI-backend](https://github.com/pranavap2026-ship-it/Revynix-AI-backend)
+- **Live Application:** [DevLens AI](https://revynix-ai.vercel.app/)
 
+---
+
+<p align="center">
+  <strong>DevLens AI</strong>
+  <br />
+  Making code review more accessible, understandable, and actionable.
+</p>
