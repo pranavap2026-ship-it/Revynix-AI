@@ -1,894 +1,209 @@
 import { useState, useEffect } from 'react';
-
 import { Link } from 'react-router-dom';
-
-import { motion } from 'framer-motion';
-
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   RiCodeSSlashLine,
   RiHistoryLine,
-  RiBookmarkLine,
-  RiBarChartLine,
   RiArrowRightLine,
-  RiBugLine,
-  RiShieldLine,
-  RiSparklingLine,
-  RiFireLine,
-  RiFlashlightLine,
-  RiLineChartLine,
-  RiRocketLine,
+  RiGitPullRequestLine,
 } from 'react-icons/ri';
-
-import useAuth from '../hooks/useAuth';
-
-import api from '../utils/api';
-
-import {
-  timeAgo,
-  scoreColor,
-  scoreColorClass,
-  getError,
-} from '../utils/helpers';
-
-import Loader from '../components/Loader';
-
 import toast from 'react-hot-toast';
 
-// ========================================
-// STAT CARD
-// ========================================
+import useAuth from '../hooks/useAuth';
+import api from '../utils/api';
+import { timeAgo, getError } from '../utils/helpers';
+import Loader from '../components/Loader';
 
-const StatCard = ({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color,
-  delay = 0,
-}) => (
+// Same fonts as the homepage. Move to index.css to avoid repeating.
+const FONT_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap');
+.rv { font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+.rv-code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.rv :focus-visible { outline: 3px solid #4B3FFF; outline-offset: 2px; }
+`;
 
-  <motion.div
+// Score colours that stay readable on a light background
+const scoreTone = score =>
+  score >= 80
+    ? { fg: '#1F7A45', bg: '#E2F6E8' }
+    : score >= 60
+    ? { fg: '#8A5300', bg: '#FFF1CC' }
+    : { fg: '#B3261E', bg: '#FDE8E6' };
 
-    initial={{
-      opacity: 0,
-      y: 20,
-    }}
-
-    animate={{
-      opacity: 1,
-      y: 0,
-    }}
-
-    transition={{
-      delay,
-    }}
-
-    whileHover={{
-      y: -5,
-      scale: 1.02,
-    }}
-
-    className="
-      relative overflow-hidden
-      rounded-3xl
-      border border-white/5
-      bg-zinc-950/80
-      backdrop-blur-xl
-      p-4 sm:p-6
-      shadow-2xl
-    "
-  >
-
-    <div
-      className="
-        absolute inset-0 opacity-10
-      "
-      style={{
-        background: `radial-gradient(circle at top right, ${color}, transparent 60%)`,
-      }}
-    />
-
-    <div className="relative z-10">
-
-      <div className="flex items-start justify-between">
-
-        <div>
-
-          <p className="text-zinc-500 text-sm">
-            {label}
-          </p>
-
-          <h2
-            className="
-              text-3xl sm:text-4xl font-black
-              mt-3 text-white
-            "
-          >
-            {value ?? '—'}
-          </h2>
-
-          {sub && (
-            <p className="text-xs text-zinc-400 mt-2">
-              {sub}
-            </p>
-          )}
-
-        </div>
-
-        <div
-          className="
-            w-12 h-12 sm:w-14 sm:h-14 rounded-2xl
-            flex items-center justify-center
-          "
-          style={{
-            background: `${color}20`,
-            border: `1px solid ${color}30`,
-          }}
-        >
-
-          <Icon
-            size={26}
-            style={{
-              color,
-            }}
-          />
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </motion.div>
+const Stat = ({ label, value, note }) => (
+  <div className="bg-white p-5 sm:p-6">
+    <p className="text-sm text-[#5A6078]">{label}</p>
+    <p className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{value ?? '-'}</p>
+    {note && <p className="mt-1 text-xs text-[#5A6078]">{note}</p>}
+  </div>
 );
 
-// ========================================
-// DASHBOARD
-// ========================================
-
 export default function DashboardPage() {
-
-  const { user } =
-    useAuth();
-
-  const [stats, setStats] =
-    useState(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  // ========================================
-  // FETCH DATA
-  // ========================================
+  const { user } = useAuth();
+  const reduce = useReducedMotion();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
-    const fetchStats =
-      async () => {
-
-        try {
-
-          setLoading(true);
-
-          const { data } =
-            await api.get(
-              '/reviews/stats'
-            );
-
-          setStats(data.data);
-
-        } catch (err) {
-
-          toast.error(
-            getError(err)
-          );
-
-        } finally {
-
-          setLoading(false);
-
-        }
-      };
-
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get('/reviews/stats');
+        setStats(data.data);
+      } catch (err) {
+        toast.error(getError(err));
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchStats();
-
   }, []);
 
-  // ========================================
-  // LOADING
-  // ========================================
+  if (loading) return <Loader fullscreen />;
 
-  if (loading) {
-
-    return (
-      <Loader fullscreen />
-    );
-  }
-
-  // ========================================
-  // STREAK
-  // ========================================
-
-  const streak =
-    stats?.recentReviews
-      ?.length || 0;
-
-  // ========================================
-  // UI
-  // ========================================
+  const recent = stats?.recentReviews || [];
+  const languages = stats?.languageBreakdown || [];
+  const total = stats?.totalReviews || 0;
 
   return (
+    <div className="rv min-h-screen bg-[#F3F5F9] text-[#14182B]">
+      <style>{FONT_CSS}</style>
 
-   <div
-  className="
-    max-w-7xl mx-auto
-    overflow-x-hidden
-    px-3 sm:px-4 md:px-6
-    py-5 sm:py-8
-    text-white
-  "
->
-
-      {/* ======================================== */}
-      {/* HEADER */}
-      {/* ======================================== */}
-
-      <motion.div
-
-        initial={{
-          opacity: 0,
-          y: -20,
-        }}
-
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-
-        className="mb-10"
-      >
-
-        <div
-          className="
-            rounded-[2rem]
-            overflow-hidden
-            border border-white/5
-            bg-zinc-950/80
-            backdrop-blur-xl
-            p-5 sm:p-7 lg:p-10
-            relative
-          "
-        >
-
-          {/* GLOW */}
-
-          <div
-            className="
-              absolute inset-0 opacity-20
-            "
-            style={{
-              background:
-                'radial-gradient(circle at top right, #06b6d4, transparent 35%), radial-gradient(circle at bottom left, #7c3aed, transparent 35%)',
-            }}
-          />
-
-          <div
-            className="
-              relative z-10
-             flex flex-col lg:flex-row
-lg:items-center
-justify-between
-gap-6 lg:gap-8
-            "
-          >
-
-            <div>
-
-              <div
-                className="
-                  inline-flex items-center gap-2
-                  px-4 py-2 rounded-full
-                  bg-cyan-500/10
-                  border border-cyan-500/20
-                  text-cyan-300
-                  text-sm font-medium
-                  mb-5
-                "
-              >
-
-                <RiSparklingLine />
-
-                Revynix AI Dashboard
-
-              </div>
-
-              <h1
-                className="
-                  text-3xl sm:text-4xl md:text-5xl lg:text-6xl
-                  font-black
-                  leading-tight
-                "
-              >
-
-                Welcome back,
-
-                <span
-                  className="
-                    block
-                    bg-gradient-to-r
-                    from-cyan-400
-                    to-violet-400
-                    bg-clip-text
-                    text-transparent
-                  "
-                >
-                  {user?.name}
-                </span>
-
-              </h1>
-
-              <p
-                className="
-                  text-zinc-400
-                  mt-4
-                  max-w-2xl
-                  leading-6 sm:leading-8
-                "
-              >
-
-                Analyze, optimize, and improve your code with AI-powered reviews, security analysis, and intelligent refactoring.
-
-              </p>
-
-            </div>
-
-            {/* ACTIONS */}
-
-            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
-
-              <Link
-                to="/review"
-                className="
-                  px-6 py-4 rounded-2xl
-                  bg-gradient-to-r
-                  from-violet-600
-                  to-cyan-500
-                  text-white font-semibold
-                  flex items-center gap-2
-                  hover:scale-105
-                  transition-all
-                "
-              >
-
-                <RiRocketLine />
-
-                New Review
-
-              </Link>
-
-              <Link
-                to="/dashboard/history"
-                className="
-                  px-6 py-4 rounded-2xl
-                  border border-white/10
-                  bg-white/[0.03]
-                  font-semibold
-                  flex items-center gap-2
-                  hover:bg-white/[0.06]
-                  transition-all
-                "
-              >
-
-                <RiHistoryLine />
-
-                History
-
-              </Link>
-
-            </div>
-
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+        {/* HEADER */}
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+              Welcome back, {user?.name}
+            </h1>
+            <p className="mt-3 max-w-xl text-[#4A5068]">
+              {recent.length
+                ? 'Here is where your recent reviews stand.'
+                : 'Paste a file to get your first review.'}
+            </p>
           </div>
-
+          <div className="flex gap-3">
+            <Link
+              to="/review"
+              className="flex items-center gap-2 rounded-xl bg-[#4B3FFF] px-6 py-3 font-semibold text-white hover:bg-[#3A2FE0]"
+            >
+              <RiGitPullRequestLine size={18} />
+              New review
+            </Link>
+            <Link
+              to="/dashboard/history"
+              className="flex items-center gap-2 rounded-xl border border-[#BFC5D6] px-5 py-3 font-semibold hover:bg-white"
+            >
+              <RiHistoryLine size={18} />
+              History
+            </Link>
+          </div>
         </div>
 
-      </motion.div>
+        {/* STATS: one strip instead of four separate cards */}
+        <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[#D9DDE8] bg-[#D9DDE8] lg:grid-cols-4">
+          <Stat label="Total reviews" value={stats?.totalReviews} />
+          <Stat label="Saved reviews" value={stats?.savedReviews} />
+          <Stat label="Average score" value={`${stats?.avgScore || 0}/100`} />
+          <Stat label="Latest reviews" value={recent.length} note="Shown below" />
+        </div>
 
-      {/* ======================================== */}
-      {/* STATS */}
-      {/* ======================================== */}
-
-      <div
-        className="
-          grid grid-cols-1
-sm:grid-cols-2
-xl:grid-cols-4
-gap-4 sm:gap-5
-mb-8 sm:mb-10
-        "
-      >
-
-        <StatCard
-          icon={RiCodeSSlashLine}
-          label="Total Reviews"
-          value={stats?.totalReviews}
-          color="#06b6d4"
-          delay={0.1}
-        />
-
-        <StatCard
-          icon={RiBookmarkLine}
-          label="Saved Reviews"
-          value={stats?.savedReviews}
-          color="#60a5fa"
-          delay={0.15}
-        />
-
-        <StatCard
-          icon={RiLineChartLine}
-          label="Average Score"
-          value={`${stats?.avgScore || 0}/100`}
-          color="#f59e0b"
-          delay={0.2}
-        />
-
-        <StatCard
-          icon={RiFireLine}
-          label="Review Streak"
-          value={`${streak}🔥`}
-          sub="Recent activity"
-          color="#ef4444"
-          delay={0.25}
-        />
-
-      </div>
-
-      {/* ======================================== */}
-      {/* CONTENT GRID */}
-      {/* ======================================== */}
-
-      <div
-        className="
-          grid grid-cols-1
-xl:grid-cols-3
-gap-5 sm:gap-6
-        "
-      >
-
-        {/* ======================================== */}
-        {/* RECENT REVIEWS */}
-        {/* ======================================== */}
-
-        <div className="xl:col-span-2">
-
-          <div
-            className="
-              rounded-[2rem]
-              border border-white/5
-              bg-zinc-950/80
-              backdrop-blur-xl
-              p-4 sm:p-6
-            "
-          >
-
-            <div
-              className="
-                flex items-center justify-between
-                mb-6
-              "
-            >
-
-              <h2
-                className="
-                  text-2xl font-bold
-                  flex items-center gap-3
-                "
-              >
-
-                <RiHistoryLine
-                  className="
-                    text-cyan-400
-                  "
-                />
-
-                Recent Reviews
-
-              </h2>
-
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
+          {/* RECENT REVIEWS: laid out like a pull request list */}
+          <section className="overflow-hidden rounded-2xl border border-[#D9DDE8] bg-white">
+            <div className="flex items-center justify-between border-b border-[#D9DDE8] bg-[#F8F9FC] px-5 py-4">
+              <h2 className="text-lg font-bold">Recent reviews</h2>
               <Link
                 to="/history"
-                className="
-                  text-cyan-400
-                  text-sm font-medium
-                  flex items-center gap-1
-                "
+                className="flex items-center gap-1 text-sm font-semibold text-[#4B3FFF] hover:underline"
               >
-
-                View all
-
-                <RiArrowRightLine />
-
+                View all <RiArrowRightLine />
               </Link>
-
             </div>
 
-            {!stats?.recentReviews?.length ? (
-
-              <div
-                className="
-                  py-20 text-center
-                "
-              >
-
-                <RiCodeSSlashLine
-                  size={60}
-                  className="
-                    text-zinc-600
-                    mx-auto mb-5
-                  "
-                />
-
-                <h3
-                  className="
-                    text-2xl font-bold mb-3
-                  "
+            {!recent.length ? (
+              <div className="px-6 py-16 text-center">
+                <RiCodeSSlashLine size={40} className="mx-auto text-[#8A90A6]" />
+                <h3 className="mt-4 text-xl font-bold">No reviews yet</h3>
+                <p className="mt-2 text-[#4A5068]">Paste a file and Revynix AI will review it.</p>
+                <Link
+                  to="/review"
+                  className="mt-6 inline-block rounded-xl bg-[#4B3FFF] px-6 py-3 font-semibold text-white hover:bg-[#3A2FE0]"
                 >
-                  No Reviews Yet
-                </h3>
-
-                <p className="text-zinc-500">
-                  Start your first AI code review.
-                </p>
-
+                  Start your first review
+                </Link>
               </div>
-
             ) : (
-
-              <div className="space-y-4">
-
-                {stats.recentReviews.map(
-                  (review, i) => (
-
-                    <Link
-                      key={review._id}
-                      to={`/review/${review._id}`}
-                    >
-
-                      <motion.div
-
-                        initial={{
-                          opacity: 0,
-                          y: 10,
-                        }}
-
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                        }}
-
-                        transition={{
-                          delay:
-                            0.3 +
-                            i * 0.05,
-                        }}
-
-                        whileHover={{
-                          y: -2,
-                        }}
-
-                        className="
-                          rounded-2xl
-                          border border-white/5
-                          bg-white/[0.02]
-                          p-5
-                          transition-all
-                          hover:border-cyan-500/20
-                        "
-                      >
-
-                        <div
-                          className="
-                            flex flex-col sm:flex-row
-sm:items-center
-justify-between
-gap-4
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex items-center gap-4
-                              min-w-0
-                            "
-                          >
-
-                            <div
-                              className="
-                                w-12 h-12 rounded-2xl
-                                bg-cyan-500/10
-                                flex items-center justify-center
-                                flex-shrink-0
-                              "
-                            >
-
-                              <RiCodeSSlashLine
-                                className="
-                                  text-cyan-400
-                                "
-                              />
-
-                            </div>
-
-                            <div className="min-w-0">
-
-                              <h3
-                                className="
-                                  font-semibold
-truncate
-text-sm sm:text-base
-                                "
-                              >
-                                {review.title}
-                              </h3>
-
-                              <p
-                                className="
-                                  text-sm text-zinc-500
-                                  mt-1
-                                "
-                              >
-
-                                {review.language}
-                                {' • '}
-                                {timeAgo(
-                                  review.createdAt
-                                )}
-
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                          <div
-                            className={`
-                              text-lg sm:text-xl font-black
-                              ${scoreColorClass(
-                                review.score
-                              )}
-                            `}
-                            style={{
-                              color:
-                                scoreColor(
-                                  review.score
-                                ),
-                            }}
-                          >
-                            {review.score}
-                          </div>
-
-                        </div>
-
-                      </motion.div>
-
-                    </Link>
-                  )
-                )}
-
-              </div>
-
-            )}
-
-          </div>
-
-        </div>
-
-        {/* ======================================== */}
-        {/* SIDE PANEL */}
-        {/* ======================================== */}
-
-        <div className="space-y-6">
-
-          {/* AI INSIGHTS */}
-
-          <div
-            className="
-              rounded-[2rem]
-              border border-white/5
-              bg-zinc-950/80
-              backdrop-blur-xl
-              p-4 sm:p-6
-            "
-          >
-
-            <h2
-              className="
-                text-xl sm:text-2xl font-bold
-                mb-6
-                flex items-center gap-2
-              "
-            >
-
-              <RiFlashlightLine
-                className="
-                  text-yellow-400
-                "
-              />
-
-              AI Insights
-
-            </h2>
-
-            <div className="space-y-4 sm:space-y-5">
-
-              <div
-                className="
-                  rounded-2xl
-                  bg-cyan-500/5
-                  border border-cyan-500/10
-                  p-5
-                "
-              >
-
-                <p className="text-zinc-400 text-sm mb-2">
-                  Most Used Language
-                </p>
-
-                <h3 className="text-2xl font-bold capitalize">
-                  {
-                    stats
-                      ?.languageBreakdown?.[0]
-                      ?._id || 'N/A'
-                  }
-                </h3>
-
-              </div>
-
-              <div
-                className="
-                  rounded-2xl
-                  bg-violet-500/5
-                  border border-violet-500/10
-                  p-5
-                "
-              >
-
-                <p className="text-zinc-400 text-sm mb-2">
-                  AI Performance
-                </p>
-
-                <h3 className="text-2xl font-bold">
-                  {
-                    stats?.avgScore || 0
-                  }
-                  %
-                </h3>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* LANGUAGE BREAKDOWN */}
-
-          <div
-            className="
-              rounded-[2rem]
-              border border-white/5
-              bg-zinc-950/80
-              backdrop-blur-xl
-              p-4 sm:p-6
-            "
-          >
-
-            <h2
-              className="
-                text-2xl font-bold
-                mb-6
-                flex items-center gap-2
-              "
-            >
-
-              <RiBarChartLine
-                className="
-                  text-cyan-400
-                "
-              />
-
-              Languages
-
-            </h2>
-
-            <div className="space-y-5">
-
-              {stats
-                ?.languageBreakdown
-                ?.map(lang => {
-
-                  const pct =
-                    Math.round(
-                      (
-                        lang.count /
-                        stats?.totalReviews || 0
-                      ) * 100
-                    );
-
+              <ul className="divide-y divide-[#E6E9F2]">
+                {recent.map(review => {
+                  const tone = scoreTone(review.score);
                   return (
-
-                    <div
-                      key={lang._id}
-                    >
-
-                      <div
-                        className="
-                          flex items-center justify-between
-                          mb-2
-                        "
+                    <li key={review._id}>
+                      <Link
+                        to={`/review/${review._id}`}
+                        className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[#F8F9FC]"
                       >
-
+                        <div className="flex min-w-0 items-center gap-4">
+                          <RiGitPullRequestLine size={20} className="shrink-0 text-[#4B3FFF]" />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{review.title}</p>
+                            <p className="mt-0.5 text-sm text-[#5A6078]">
+                              <span className="rv-code">{review.language}</span>
+                              {' · '}
+                              {timeAgo(review.createdAt)}
+                            </p>
+                          </div>
+                        </div>
                         <span
-                          className="
-                            capitalize font-medium
-                          "
+                          className="rv-code shrink-0 rounded-md px-2.5 py-1 text-sm font-semibold"
+                          style={{ color: tone.fg, background: tone.bg }}
+                          title="Review score out of 100"
                         >
-                          {lang._id}
+                          {review.score}
                         </span>
-
-                        <span
-                          className="
-                            text-sm text-zinc-500
-                          "
-                        >
-                          {pct}%
-                        </span>
-
-                      </div>
-
-                      <div
-                        className="
-                          h-3 rounded-full
-                          bg-white/5 overflow-hidden
-                        "
-                      >
-
-                        <motion.div
-
-                          initial={{
-                            width: 0,
-                          }}
-
-                          animate={{
-                            width: `${pct}%`,
-                          }}
-
-                          transition={{
-                            duration: 1,
-                          }}
-
-                          className="
-                            h-full rounded-full
-                          "
-
-                          style={{
-                            background:
-                              'linear-gradient(to right,#06b6d4,#7c3aed)',
-                          }}
-                        />
-
-                      </div>
-
-                    </div>
+                      </Link>
+                    </li>
                   );
                 })}
+              </ul>
+            )}
+          </section>
 
-            </div>
-
-          </div>
-
+          {/* LANGUAGES */}
+          <section className="h-fit rounded-2xl border border-[#D9DDE8] bg-white p-5">
+            <h2 className="text-lg font-bold">Languages you review</h2>
+            {languages.length ? (
+              <ul className="mt-5 space-y-4">
+                {languages.map(lang => {
+                  const pct = total ? Math.round((lang.count / total) * 100) : 0;
+                  return (
+                    <li key={lang._id}>
+                      <div className="mb-1.5 flex justify-between text-sm">
+                        <span className="rv-code capitalize">{lang._id}</span>
+                        <span className="text-[#5A6078]">
+                          {lang.count} ({pct}%)
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-[#E6E9F2]">
+                        <motion.div
+                          initial={reduce ? false : { width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8 }}
+                          className="h-full rounded-full bg-[#4B3FFF]"
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-[#4A5068]">
+                Your language breakdown shows up after your first review.
+              </p>
+            )}
+          </section>
         </div>
-
       </div>
-
     </div>
   );
 }

@@ -1,1519 +1,430 @@
 import { useState } from 'react';
-
 import Editor from '@monaco-editor/react';
-
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import {
+  RiSparklingLine,
+  RiShieldCheckLine,
+  RiFileCopyLine,
+  RiCheckLine,
+  RiShareLine,
+  RiDownloadLine,
+} from 'react-icons/ri';
 
 import api from '../utils/api';
 
-import jsPDF from 'jspdf';
+const LANGS = [
+  ['javascript', 'JavaScript'],
+  ['typescript', 'TypeScript'],
+  ['python', 'Python'],
+  ['java', 'Java'],
+  ['cpp', 'C++'],
+  ['c', 'C'],
+  ['csharp', 'C#'],
+  ['php', 'PHP'],
+  ['go', 'Go'],
+  ['rust', 'Rust'],
+  ['html', 'HTML'],
+  ['css', 'CSS'],
+];
+const PREVIEWABLE = ['html', 'css', 'javascript'];
+const MAX_CHARS = 50000;
 
-import html2canvas
-from 'html2canvas';
-import {
+const scoreTone = score =>
+  score >= 80
+    ? { fg: '#1F7A45', bg: '#E2F6E8' }
+    : score >= 60
+    ? { fg: '#8A5300', bg: '#FFF1CC' }
+    : { fg: '#B3261E', bg: '#FDE8E6' };
 
-  RiSparklingLine,
+const previewDoc = (language, code) =>
+  language === 'html'
+    ? code
+    : language === 'css'
+    ? `<html><head><style>${code}</style></head><body><div class="preview">CSS preview</div></body></html>`
+    : `<html><body><div id="app"></div><script>try{${code}}catch(e){document.body.innerHTML+='<pre style="color:#B3261E;padding:16px">'+e+'</pre>'}</script></body></html>`;
 
-  RiCodeSSlashLine,
+const Panel = ({ title, children }) => (
+  <section className="rounded-2xl border border-[#D9DDE8] bg-white p-5">
+    <h3 className="mb-3 text-lg font-bold">{title}</h3>
+    {children}
+  </section>
+);
 
-  RiBugLine,
-
-  RiShieldCheckLine,
-
-  RiFlashlightLine,
-
-  RiFileCopyLine,
-
-  RiCheckLine,
-
-  RiShareLine,
-
-  RiDownloadLine,
-
-  RiBarChartBoxLine,
-
-} from 'react-icons/ri';
-
-import { motion } from 'framer-motion';
+const iconBtn =
+  'flex items-center gap-2 rounded-lg border border-[#BFC5D6] px-3 py-2 text-sm font-semibold hover:bg-[#E6E9F2]';
 
 export default function Reviewer() {
+  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [reviewId, setReviewId] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [mobileTab, setMobileTab] = useState('code');
+  const [showPreview, setShowPreview] = useState(false);
 
-  // ========================================
-  // STATES
-  // ========================================
+  const isPreviewSupported = PREVIEWABLE.includes(language);
 
-  const [code, setCode] =
-    useState('');
-
-  const [language, setLanguage] =
-    useState('javascript');
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [result, setResult] =
-    useState(null);
-
-  const [copied, setCopied] =
-    useState(false);
-
-  // MOBILE SWITCH
-
-  const [mobileTab, setMobileTab] =
-    useState('code');
-
-    const [showPreview,
-  setShowPreview] =
-  useState(false);
-  // ========================================
-  // REVIEW CODE
-  // ========================================
-
-  const handleReview =
-    async () => {
-
-      if (!code.trim()) {
-
-        toast.error(
-          'Please enter code'
-        );
-
-        return;
-      }
-
-      try {
-
-        setLoading(true);
-
-        setResult(null);
-
-        const response =
-          await api.post(
-            '/reviews',
-            {
-              code,
-              language,
-            }
-          );
-
-      setResult(
-  response.data.data.aiResponse
-);
-        // AUTO SWITCH TO REVIEW ON MOBILE
-
-        setMobileTab('review');
-
-        toast.success(
-          'AI Review Completed'
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        toast.error(
-          error?.response?.data
-            ?.message ||
-            'Review failed'
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-  // ========================================
-  // COPY RESULT
-  // ========================================
-
-  const copyResult =
-    async () => {
-
-      try {
-
-        await navigator.clipboard.writeText(
-          JSON.stringify(
-  result,
-  null,
-  2
-)
-        );
-
-        setCopied(true);
-
-        toast.success(
-          'Copied to clipboard'
-        );
-
-        setTimeout(() => {
-          setCopied(false);
-        }, 2000);
-
-      } catch {
-
-        toast.error(
-          'Copy failed'
-        );
-
-      }
-    };
-
-
-    // ========================================
-// SHARE REVIEW
-// ========================================
-
-const shareReview =
-  async () => {
+  const handleReview = async () => {
+    if (!code.trim()) return toast.error('Please enter some code');
+    if (code.length > MAX_CHARS) return toast.error('Code is over the 50,000 character limit');
 
     try {
-
-      if (
-        navigator.share
-      ) {
-
-        await navigator.share({
-
-          title:
-            'Revynix AI Review',
-
-          text:
-            result?.summary,
-
-          url:
-            window.location.href,
-        });
-
-      } else {
-
-        await navigator.clipboard.writeText(
-          window.location.href
-        );
-
-        toast.success(
-          'Link copied'
-        );
-      }
-
-    } catch {
-
-      toast.error(
-        'Share failed'
-      );
+      setLoading(true);
+      setResult(null);
+      const response = await api.post('/reviews', { code, language });
+      setResult(response.data.data.aiResponse);
+      setReviewId(response.data.data._id || null);
+      setMobileTab('review'); // jump to the result on phones
+      toast.success('Review complete');
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || 'Review failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-// ========================================
-// DOWNLOAD PDF
-// ========================================
-
-const downloadPDF =
-  () => {
-
+  const copyResult = async () => {
     try {
+      await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+      setCopied(true);
+      toast.success('Copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Copy failed');
+    }
+  };
 
-      if (!result) {
-
-        toast.error(
-          'No review available'
-        );
-
-        return;
+  const shareReview = async () => {
+    const url = reviewId ? `${window.location.origin}/review/${reviewId}` : window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Revynix AI review', text: result?.summary, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied');
       }
+    } catch {
+      toast.error('Share failed');
+    }
+  };
 
-      const pdf =
-        new jsPDF();
-
+  const downloadPDF = () => {
+    if (!result) return toast.error('No review available');
+    try {
+      const pdf = new jsPDF();
       let y = 20;
-
-      const addLine =
-        (
-          text = ''
-        ) => {
-
-          const lines =
-            pdf.splitTextToSize(
-              text,
-              170
-            );
-
-          pdf.text(
-            lines,
-            20,
-            y
-          );
-
-          y +=
-            lines.length * 8;
-
-          // NEW PAGE
-
-          if (y > 270) {
-
-            pdf.addPage();
-
-            y = 20;
-          }
-        };
-
-      // TITLE
+      const addLine = (text = '') => {
+        const lines = pdf.splitTextToSize(String(text), 170);
+        pdf.text(lines, 20, y);
+        y += lines.length * 8;
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+      };
 
       pdf.setFontSize(22);
-
-      pdf.text(
-        'Revynix AI Review',
-        20,
-        y
-      );
-
+      pdf.text('Revynix AI Review', 20, y);
       y += 15;
-
-      // SCORE
-
       pdf.setFontSize(16);
 
-      addLine(
-        `Score: ${result.score}/100`
-      );
+      addLine(`Score: ${result.score}/100`);
+      addLine(`Summary: ${result.summary}`);
+      addLine(`Expected Output: ${result.expectedOutput}`);
 
-      // SUMMARY
-
-      addLine(
-        `Summary: ${result.summary}`
-      );
-
-      // OUTPUT
-
-      addLine(
-        `Expected Output: ${result.expectedOutput}`
-      );
-
-      // BUGS
-
-      if (
-        result.bugs?.length
-      ) {
-
-        addLine(
-          'Bugs Detected:'
-        );
-
-        result.bugs.forEach(
-          (
-            bug,
-            index
-          ) => {
-
-            addLine(
-              `${index + 1}. Line ${bug.line}`
-            );
-
-            addLine(
-              `Severity: ${bug.severity}`
-            );
-
-            addLine(
-              `Description: ${bug.description}`
-            );
-
-            addLine(
-              `Fix: ${bug.fix}`
-            );
-
-            y += 5;
-          }
-        );
+      if (result.bugs?.length) {
+        addLine('Bugs Detected:');
+        result.bugs.forEach((bug, i) => {
+          addLine(`${i + 1}. Line ${bug.line}`);
+          addLine(`Severity: ${bug.severity}`);
+          addLine(`Description: ${bug.description}`);
+          addLine(`Fix: ${bug.fix}`);
+          y += 5;
+        });
+      }
+      if (result.complexity) {
+        addLine(`Time Complexity: ${result.complexity.timeComplexity}`);
+        addLine(`Space Complexity: ${result.complexity.spaceComplexity}`);
+      }
+      if (result.finalVerdict) addLine(`Final Verdict: ${result.finalVerdict}`);
+      if (result.refactoredCode) {
+        addLine('Refactored Code:');
+        addLine(result.refactoredCode);
       }
 
-      // COMPLEXITY
-
-      if (
-        result.complexity
-      ) {
-
-        addLine(
-          `Time Complexity: ${result.complexity.timeComplexity}`
-        );
-
-        addLine(
-          `Space Complexity: ${result.complexity.spaceComplexity}`
-        );
-      }
-
-      // FINAL VERDICT
-
-      if (
-        result.finalVerdict
-      ) {
-
-        addLine(
-          `Final Verdict: ${result.finalVerdict}`
-        );
-      }
-
-      // REFACTORED CODE
-
-      if (
-        result.refactoredCode
-      ) {
-
-        addLine(
-          'Refactored Code:'
-        );
-
-        addLine(
-          result.refactoredCode
-        );
-      }
-
-      pdf.save(
-        'revynix-review.pdf'
-      );
-
-      toast.success(
-        'PDF downloaded'
-      );
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        error
-      );
-
-      toast.error(
-        'PDF generation failed'
-      );
+      pdf.save('revynix-review.pdf');
+      toast.success('PDF downloaded');
+    } catch (error) {
+      console.error(error);
+      toast.error('PDF generation failed');
     }
   };
-  // ========================================
-  // SCORE
-  // ========================================
 
-const score =
-  result?.score || 0;
-
-
-    const isPreviewSupported = [
-
-  'html',
-
-  'css',
-
-  'javascript',
-
-].includes(language);
-  // ========================================
-  // UI
-  // ========================================
+  const score = result?.score || 0;
+  const tone = scoreTone(score);
 
   return (
+    <div className="rv min-h-screen bg-[#F3F5F9] px-4 py-6 text-[#14182B] lg:py-10">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Review your code</h1>
+        <p className="mt-3 text-[#4A5068]">Paste a file, pick the language and read what Revynix AI finds.</p>
 
-    <div
-      className="
-        min-h-screen
-        text-white
-        px-4 py-6 lg:py-8
-      "
-    >
-
-      {/* HEADER */}
-
-      <div className="max-w-7xl mx-auto mb-6">
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-        >
-
-          <div className="flex items-center gap-4 mb-4">
-
-            <div
-              className="
-                w-14 h-14 rounded-2xl
-                flex items-center justify-center
-              "
-              style={{
-                background:
-                  'linear-gradient(135deg,#7C3AED,#06B6D4)',
-              }}
+        {/* MOBILE TABS */}
+        <div className="mt-6 grid grid-cols-2 rounded-xl border border-[#BFC5D6] bg-white p-1 lg:hidden" role="tablist">
+          {[
+            ['code', 'Code'],
+            ['review', 'Review'],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={mobileTab === id}
+              onClick={() => setMobileTab(id)}
+              className={`rounded-lg py-2.5 font-semibold ${
+                mobileTab === id ? 'bg-[#14182B] text-white' : 'text-[#4A5068]'
+              }`}
             >
-              <RiSparklingLine
-                size={26}
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+          {/* LEFT: CODE */}
+          <section className={`${mobileTab === 'review' ? 'hidden lg:block' : 'block'}`}>
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <label htmlFor="language" className="sr-only">
+                Language
+              </label>
+              <select
+                id="language"
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+                className="h-11 rounded-xl border border-[#BFC5D6] bg-white px-3 text-sm font-semibold outline-none focus:border-[#4B3FFF]"
+              >
+                {LANGS.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+
+              {isPreviewSupported && (
+                <button onClick={() => setShowPreview(!showPreview)} aria-pressed={showPreview} className={iconBtn}>
+                  {showPreview ? 'Hide preview' : 'Live preview'}
+                </button>
+              )}
+
+              <span className="ml-auto text-sm text-[#5A6078]">
+                {code.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-[#D9DDE8] bg-white">
+              <Editor
+                height="65vh"
+                language={language}
+                theme="vs"
+                value={code}
+                onChange={value => setCode(value || '')}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  scrollBeyondLastLine: false,
+                  padding: { top: 12, bottom: 12 },
+                }}
               />
             </div>
 
-            <div>
-
-              <h1
-                className="
-                  text-3xl md:text-5xl
-                  font-black
-                "
-              >
-                Revynix AI
-              </h1>
-
-              <p className="text-zinc-400 mt-1">
-                AI-Powered Code Review Platform
-              </p>
-
-            </div>
-
-          </div>
-
-        </motion.div>
-
-      </div>
-
-      {/* ======================================== */}
-      {/* MOBILE TAB SWITCHER */}
-      {/* ======================================== */}
-
-      <div className="lg:hidden mb-5">
-
-        <div
-          className="
-            grid grid-cols-2
-            bg-zinc-900
-            border border-white/5
-            rounded-2xl
-            p-1
-          "
-        >
-
-          <button
-            onClick={() =>
-              setMobileTab('code')
-            }
-            className={`
-              py-3 rounded-xl
-              font-medium transition-all
-
-              ${
-                mobileTab === 'code'
-                  ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white'
-                  : 'text-zinc-400'
-              }
-            `}
-          >
-            Code
-          </button>
-
-          <button
-            onClick={() =>
-              setMobileTab('review')
-            }
-            className={`
-              py-3 rounded-xl
-              font-medium transition-all
-
-              ${
-                mobileTab === 'review'
-                  ? 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white'
-                  : 'text-zinc-400'
-              }
-            `}
-          >
-            Review
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* ======================================== */}
-      {/* MAIN LAYOUT */}
-      {/* ======================================== */}
-
-      <div
-        className="
-          max-w-7xl mx-auto
-          grid grid-cols-1 lg:grid-cols-2
-          gap-6
-          items-start
-        "
-      >
-
-        {/* ======================================== */}
-        {/* LEFT SIDE — CODE SECTION */}
-        {/* ======================================== */}
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: -20,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          className={`
-            bg-zinc-950/80
-            border border-white/5
-            rounded-3xl
-            overflow-hidden
-            backdrop-blur-xl
-            shadow-2xl
-
-            ${
-              mobileTab === 'review'
-                ? 'hidden lg:block'
-                : 'block'
-            }
-          `}
-        >
-
-          {/* HEADER */}
-
-          <div
-            className="
-              flex flex-col sm:flex-row
-              sm:items-center
-              justify-between
-              gap-4
-              px-5 py-4
-              border-b border-white/5
-              bg-white/[0.02]
-            "
-          >
-
-            <div className="flex items-center gap-3">
-
-              <div
-                className="
-                  w-10 h-10 rounded-xl
-                  flex items-center justify-center
-                "
-                style={{
-                  background:
-                    'linear-gradient(135deg,#7C3AED,#06B6D4)',
-                }}
-              >
-                <RiCodeSSlashLine />
+            {showPreview && isPreviewSupported && (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-[#D9DDE8] bg-white">
+                <p className="border-b border-[#D9DDE8] bg-[#F8F9FC] px-4 py-2.5 text-sm font-semibold">Live preview</p>
+                {/* No allow-same-origin: pasted code must not reach your login token */}
+                <iframe
+                  title="Live preview"
+                  sandbox="allow-scripts"
+                  srcDoc={previewDoc(language, code)}
+                  className="h-[320px] w-full bg-white"
+                />
               </div>
-
-              <div>
-
-                <h2 className="font-semibold text-lg">
-                  Code Section
-                </h2>
-
-                <p className="text-xs text-zinc-500">
-                  Write or paste your code
-                </p>
-
-              </div>
-
-            </div>
-
-            {/* LANGUAGE */}
-
-            <select
-  value={language}
-  onChange={e =>
-    setLanguage(
-      e.target.value
-    )
-  }
-  className="
-    bg-zinc-900
-    border border-zinc-700
-    rounded-xl
-    px-4 py-2.5
-    text-sm
-    outline-none
-    min-w-[180px]
-  "
->
-
-  <option value="javascript">
-    JavaScript
-  </option>
-
-  <option value="typescript">
-    TypeScript
-  </option>
-
-  <option value="python">
-    Python
-  </option>
-
-  <option value="java">
-    Java
-  </option>
-
-  <option value="cpp">
-    C++
-  </option>
-
-  <option value="c">
-    C
-  </option>
-
-  <option value="csharp">
-    C#
-  </option>
-
-  <option value="php">
-    PHP
-  </option>
-
-  <option value="go">
-    Go
-  </option>
-
-  <option value="rust">
-    Rust
-  </option>
-
-  <option value="html">
-    Html
-  </option>
-
-  <option value="css">
-    Css
-  </option>
-
-</select>
-          </div>
-
-
-{
-  isPreviewSupported && (
-
-    <button
-      onClick={() =>
-        setShowPreview(
-          !showPreview
-        )
-      }
-      className="
-        bg-cyan-500/10
-        border border-cyan-500/20
-        text-cyan-400
-        rounded-xl
-        px-4 py-2
-        text-sm
-        transition-all
-        hover:bg-cyan-500/20
-      "
-    >
-      {
-        showPreview
-
-          ? 'Hide Preview'
-
-          : 'Live Preview'
-      }
-    </button>
-  )
-}
-          {/* EDITOR */}
-
-          <Editor
-            height="75vh"
-            language={language}
-            theme="vs-dark"
-            value={code}
-            onChange={value =>
-              setCode(value || '')
-            }
-            options={{
-              minimap: {
-                enabled: false,
-              },
-
-              fontSize: 15,
-
-              wordWrap: 'on',
-
-              automaticLayout: true,
-
-              scrollBeyondLastLine: false,
-
-              smoothScrolling: true,
-            }}
-          />
-
-          {/* BUTTON */}
-
-          <div
-  id="review-content"
-  className="
-    p-5">
+            )}
 
             <button
               onClick={handleReview}
               disabled={loading}
-              className="
-                w-full
-                py-4 rounded-2xl
-                font-semibold
-                text-white
-                transition-all
-                hover:scale-[1.01]
-                disabled:opacity-50
-              "
-              style={{
-                background:
-                  'linear-gradient(135deg,#7C3AED,#06B6D4)',
-              }}
+              className="mt-4 h-12 w-full rounded-xl bg-[#4B3FFF] font-semibold text-white hover:bg-[#3A2FE0] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading
-                ? 'Analyzing Code...'
-                : 'Review Code with AI'}
+              {loading ? 'Reviewing your code...' : 'Review code'}
             </button>
+          </section>
 
-          </div>
-
-        </motion.div>
-
-        {/* ======================================== */}
-        {/* RIGHT SIDE — REVIEW SECTION */}
-        {/* ======================================== */}
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: 20,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          className={`
-            bg-zinc-950/80
-            border border-white/5
-            rounded-3xl
-            overflow-hidden
-            backdrop-blur-xl
-            shadow-2xl
-
-            ${
-              mobileTab === 'code'
-                ? 'hidden lg:block'
-                : 'block'
-            }
-          `}
-        >
-
-          {/* HEADER */}
-
-          <div
-            className="
-              flex items-center justify-between
-              px-5 py-4
-              border-b border-white/5
-              bg-white/[0.02]
-            "
+          {/* RIGHT: REVIEW */}
+          <section
+            className={`overflow-hidden rounded-2xl border border-[#D9DDE8] bg-[#F8F9FC] ${
+              mobileTab === 'code' ? 'hidden lg:block' : 'block'
+            }`}
           >
-
-            <div>
-
-              <h2 className="font-semibold text-lg">
-                Review & Output
-              </h2>
-
-              <p className="text-xs text-zinc-500">
-                AI-generated analysis
-              </p>
-
+            <div className="flex items-center justify-between gap-3 border-b border-[#D9DDE8] bg-white px-5 py-4">
+              <h2 className="text-lg font-bold">Review</h2>
+              {result && (
+                <div className="flex items-center gap-2">
+                  <button onClick={shareReview} aria-label="Share review" className={iconBtn}>
+                    <RiShareLine />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                  <button onClick={downloadPDF} aria-label="Download PDF" className={iconBtn}>
+                    <RiDownloadLine />
+                    <span className="hidden sm:inline">PDF</span>
+                  </button>
+                  <button onClick={copyResult} aria-label="Copy review" className={iconBtn}>
+                    {copied ? <RiCheckLine /> : <RiFileCopyLine />}
+                    <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {result && (
-
-  <div className="flex items-center gap-2">
-
-    {/* SHARE */}
-
-    <button
-      onClick={shareReview}
-      className="
-        p-2 rounded-xl
-        bg-cyan-500/10
-        hover:bg-cyan-500/20
-        transition-all
-      "
-    >
-      <RiShareLine />
-    </button>
-
-    {/* PDF */}
-
-    <button
-      onClick={downloadPDF}
-      className="
-        p-2 rounded-xl
-        bg-violet-500/10
-        hover:bg-violet-500/20
-        transition-all
-      "
-    >
-      <RiDownloadLine />
-    </button>
-
-    {/* COPY */}
-
-    <button
-      onClick={copyResult}
-      className="
-        flex items-center gap-2
-        px-4 py-2 rounded-xl
-        bg-white/5 hover:bg-white/10
-        text-sm transition-all
-      "
-    >
-
-      {copied ? (
-        <>
-          <RiCheckLine />
-          Copied
-        </>
-      ) : (
-        <>
-          <RiFileCopyLine />
-          Copy
-        </>
-      )}
-
-    </button>
-
-  </div>
-)}
-
-          </div>
-
-          {/* BODY */}
-
-          <div
-            className="
-              p-5
-              lg:h-[85vh]
-              overflow-y-auto
-              space-y-6
-            "
-          >
-
-            {!result ? (
-
-              <div
-                className="
-                  min-h-[70vh]
-                  flex flex-col
-                  items-center justify-center
-                  text-center
-                "
-              >
-
-                <RiSparklingLine
-                  size={60}
-                  className="text-cyan-400 mb-6"
-                />
-
-                <h3 className="text-3xl font-bold mb-3">
-                  Waiting for AI Review
-                </h3>
-
-                <p className="text-zinc-500 max-w-md leading-7">
-                  Submit your code to receive
-                  AI-powered analysis, bug detection,
-                  optimization suggestions, and
-                  expected output.
-                </p>
-
-              </div>
-
-            ) : (
-
-              <>
-
-                {/* SCORE */}
-
-                <div
-                  className="
-                    rounded-3xl
-                    border border-cyan-500/20
-                    bg-cyan-500/5
-                    p-6
-                  "
-                >
-
-                  <div className="flex items-center justify-between">
-
-                    <div>
-
-                      <p className="text-zinc-400 text-sm">
-                        AI Quality Score
-                      </p>
-
-                      <h2 className="text-4xl font-black mt-1">
-                        {score}
-                        <span className="text-cyan-400">
-                          /100
-                        </span>
-                      </h2>
-
-                    </div>
-
-                    <div
-                      className="
-                        w-20 h-20 rounded-full
-                        border-4 border-cyan-400
-                        flex items-center justify-center
-                        text-cyan-300 font-bold
-                      "
-                    >
-                      {score}%
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* SUMMARY */}
-
-                <div
-                  className="
-                    rounded-3xl
-                    border border-white/5
-                    bg-white/[0.03]
-                    p-6
-                  "
-                >
-
-                  <h3 className="text-xl font-bold mb-4">
-                    AI Summary
+            <div className="space-y-4 p-4 sm:p-5 lg:max-h-[85vh] lg:overflow-y-auto">
+              {!result ? (
+                <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
+                  <RiSparklingLine size={44} className="text-[#4B3FFF]" />
+                  <h3 className="mt-4 text-xl font-bold">
+                    {loading ? 'Reviewing your code...' : 'Your review will appear here'}
                   </h3>
-
-                  <p className="text-zinc-300 leading-8">
-                    {
-                     result?.summary
-                    }
+                  <p className="mt-2 max-w-sm text-[#4A5068]">
+                    {loading
+                      ? 'This usually takes a few seconds.'
+                      : 'Add your code on the left and select Review code.'}
                   </p>
-
                 </div>
-
-
-{
-  showPreview &&
-  isPreviewSupported && (
-
-    <div
-      className="
-        border-t
-        border-white/5
-        bg-black
-      "
-    >
-
-      <div
-        className="
-          px-5 py-3
-          border-b border-white/5
-          flex items-center justify-between
-        "
-      >
-
-        <h3 className="font-semibold">
-          Live Preview
-        </h3>
-
-        <span
-          className="
-            text-xs
-            text-zinc-500
-          "
-        >
-          Real-time rendering
-        </span>
-
-      </div>
-
-      <iframe
-        title="preview"
-
-        sandbox="
-          allow-scripts
-          allow-same-origin
-        "
-
-        srcDoc={
-
-          language === 'html'
-
-            ? code
-
-            : language === 'css'
-
-            ? `
-              <html>
-              <head>
-                <style>
-                  ${code}
-                </style>
-              </head>
-
-              <body>
-                <div class="preview">
-                  Revynix AI CSS Preview
-                </div>
-              </body>
-              </html>
-            `
-
-            : `
-              <html>
-
-              <body>
-
-                <div id="app">
-                  JavaScript Preview
-                </div>
-
-                <script>
-                  try {
-
-                    ${code}
-
-                  } catch(error) {
-
-                    document.body.innerHTML +=
-                    '<pre style="color:red;padding:20px;">'
-                    + error +
-                    '</pre>';
-                  }
-                </script>
-
-              </body>
-
-              </html>
-            `
-        }
-
-        className="
-          w-full
-          h-[350px]
-          bg-white
-        "
-      />
-
-    </div>
-  )
-}
-
-                {/* OUTPUT */}
-
-                <div
-                  className="
-                    rounded-3xl
-                    border border-emerald-500/20
-                    bg-emerald-500/[0.04]
-                    overflow-hidden
-                  "
-                >
-
-                  <div
-                    className="
-                      px-5 py-4
-                      border-b border-emerald-500/10
-                    "
-                  >
-
-                    <h3 className="text-xl font-bold">
-                      Expected Output
-                    </h3>
-
-                  </div>
-
-                  <div className="p-5">
-
-                    <div
-                      className="
-                        rounded-2xl
-                        bg-black/40
-                        border border-white/5
-                        p-5
-                        font-mono
-                        text-emerald-300
-                        text-lg
-                        whitespace-pre-wrap
-                      "
-                    >
-                      {
-                       result?.expectedOutput||
-
-                        'No output prediction available.'
-                      }
-                    </div>
-
-                  </div>
-
-                </div>
-
-                
-
-                {/* BUGS */}
-
-                <div>
-
-                  <h3 className="text-xl font-bold mb-5">
-                    Bugs Detected
-                  </h3>
-
-                  {result?.bugs
-                    ?.length > 0 ? (
-
-                    <div className="space-y-4">
-
-                      {result?.bugs?.map(
-                          (
-                            bug,
-                            index
-                          ) => (
-
-                            <div
-                              key={index}
-                              className="
-                                rounded-3xl
-                                border border-red-500/20
-                                bg-red-500/[0.03]
-                                p-5
-                              "
-                            >
-
-                              <div className="flex items-center gap-3 mb-4">
-
-                                <div
-                                  className="
-                                    w-11 h-11 rounded-2xl
-                                    bg-red-500/10
-                                    flex items-center justify-center
-                                  "
-                                >
-                                  <RiBugLine className="text-red-400" />
-                                </div>
-
-                                <div>
-
-                                  <h4 className="font-semibold">
-                                    Line {bug.line}
-                                  </h4>
-
-                                  <p className="text-sm text-zinc-500">
-                                    {bug.severity}
-                                  </p>
-
-                                </div>
-
-                              </div>
-
-                              <p className="text-zinc-300 leading-7">
-                                {bug.description}
-                              </p>
-
-                              <div
-                                className="
-                                  mt-4 rounded-2xl
-                                  bg-black/30
-                                  border border-white/5
-                                  p-4
-                                "
-                              >
-
-                                <p className="text-cyan-400 text-sm mb-2">
-                                  Suggested Fix
-                                </p>
-
-                                <p className="text-zinc-300 text-sm">
-                                  {bug.fix}
-                                </p>
-
-                              </div>
-
-                            </div>
-                          )
-                        )}
-
-                    </div>
-
-                  ) : (
-
-                    <div
-                      className="
-                        rounded-3xl
-                        border border-green-500/20
-                        bg-green-500/[0.05]
-                        p-8 text-center
-                      "
-                    >
-
-                      <RiShieldCheckLine
-                        size={50}
-                        className="
-                          text-green-400
-                          mx-auto mb-4
-                        "
-                      />
-
-                      <h3 className="text-2xl font-bold text-green-300 mb-3">
-                        No Critical Issues Found
-                      </h3>
-
-                      <p className="text-zinc-400 leading-7">
-                        Revynix AI analyzed your code
-                        and found no major issues.
+              ) : (
+                <>
+                  {/* SCORE */}
+                  <div className="flex items-center justify-between rounded-2xl border border-[#D9DDE8] bg-white p-5">
+                    <div>
+                      <p className="text-sm text-[#5A6078]">Quality score</p>
+                      <p className="mt-1 text-4xl font-extrabold">
+                        {score}
+                        <span className="text-xl text-[#5A6078]">/100</span>
                       </p>
-
                     </div>
+                    <span
+                      className="rv-code rounded-lg px-4 py-2 text-lg font-semibold"
+                      style={{ color: tone.fg, background: tone.bg }}
+                    >
+                      {score >= 80 ? 'Good' : score >= 60 ? 'Needs work' : 'Risky'}
+                    </span>
+                  </div>
 
+                  <Panel title="Summary">
+                    <p className="leading-relaxed text-[#4A5068]">{result.summary}</p>
+                  </Panel>
+
+                  <Panel title="Expected output">
+                    <pre className="rv-code overflow-x-auto whitespace-pre-wrap rounded-lg bg-[#14182B] p-4 text-sm text-[#E6E9F2]">
+                      {result.expectedOutput || 'No output prediction available.'}
+                    </pre>
+                  </Panel>
+
+                  {/* BUGS */}
+                  <Panel title={`Bugs (${result.bugs?.length || 0})`}>
+                    {result.bugs?.length > 0 ? (
+                      <div className="-m-2">
+                        {result.bugs.map((bug, i) => (
+                          <div key={i} className="m-2 rounded-lg border border-[#E8CF73] bg-[#FFF6D6] p-3 text-sm">
+                            <div className="mb-1.5 flex items-center gap-2">
+                              <span className="rounded bg-[#B3261E] px-2 py-0.5 text-xs font-semibold text-white">
+                                {bug.severity || 'Bug'}
+                              </span>
+                              <span className="rv-code text-xs">Line {bug.line}</span>
+                            </div>
+                            {bug.description}
+                            {bug.fix && (
+                              <p className="mt-2 text-[#4A5068]">
+                                <span className="font-semibold text-[#14182B]">Fix: </span>
+                                {bug.fix}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="flex items-center gap-2 rounded-lg bg-[#E2F6E8] px-4 py-3 font-semibold text-[#1F7A45]">
+                        <RiShieldCheckLine size={20} />
+                        No critical issues found.
+                      </p>
+                    )}
+                  </Panel>
+
+                  {result.finalVerdict && (
+                    <Panel title="Final verdict">
+                      <p className="leading-relaxed text-[#4A5068]">{result.finalVerdict}</p>
+                    </Panel>
                   )}
 
-                </div>
+                  {result.codeQuality && (
+                    <Panel title="Code quality">
+                      <div className="space-y-4">
+                        {Object.entries(result.codeQuality).map(([key, value]) => (
+                          <div key={key}>
+                            <div className="mb-1.5 flex justify-between text-sm">
+                              <span className="capitalize">{key}</span>
+                              <span className="text-[#5A6078]">{value}%</span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-[#E6E9F2]">
+                              <div
+                                className="h-full rounded-full bg-[#4B3FFF]"
+                                style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Panel>
+                  )}
 
+                  {result.complexity && (
+                    <Panel title="Complexity">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-[#5A6078]">Time</p>
+                          <p className="rv-code mt-1 text-xl font-semibold">{result.complexity.timeComplexity}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-[#5A6078]">Space</p>
+                          <p className="rv-code mt-1 text-xl font-semibold">{result.complexity.spaceComplexity}</p>
+                        </div>
+                      </div>
+                      {result.complexity.description && (
+                        <p className="mt-4 leading-relaxed text-[#4A5068]">{result.complexity.description}</p>
+                      )}
+                    </Panel>
+                  )}
 
-{/* FINAL VERDICT */}
-
-{
-  result?.finalVerdict && (
-
-    <div
-      className="
-        rounded-3xl
-        border border-cyan-500/20
-        bg-gradient-to-r
-        from-violet-500/10
-        to-cyan-500/10
-        p-6
-      "
-    >
-
-      <h3 className="text-2xl font-bold mb-3">
-        Final Verdict
-      </h3>
-
-      <p className="text-zinc-300 leading-8 text-lg">
-        {result.finalVerdict}
-      </p>
-
-    </div>
-  )
-}
-
-{/* CODE QUALITY */}
-
-{
-  result?.codeQuality && (
-
-    <div
-      className="
-        rounded-3xl
-        border border-white/5
-        bg-white/[0.03]
-        p-6
-      "
-    >
-
-      <div className="flex items-center gap-3 mb-6">
-
-        <RiBarChartBoxLine
-          className="
-            text-cyan-400
-            text-2xl
-          "
-        />
-
-        <h3 className="text-xl font-bold">
-          Code Quality
-        </h3>
-
-      </div>
-
-      {
-        Object.entries(
-          result.codeQuality
-        ).map(
-          (
-            [key, value]
-          ) => (
-
-            <div
-              key={key}
-              className="mb-5"
-            >
-
-              <div className="flex justify-between mb-2">
-
-                <span className="capitalize">
-                  {key}
-                </span>
-
-                <span>
-                  {value}%
-                </span>
-
-              </div>
-
-              <div
-                className="
-                  h-3 rounded-full
-                  bg-zinc-800
-                  overflow-hidden
-                "
-              >
-
-                <div
-                  className="
-                    h-full rounded-full
-                    bg-gradient-to-r
-                    from-violet-500
-                    to-cyan-400
-                  "
-                  style={{
-                    width: `${value}%`,
-                  }}
-                />
-
-              </div>
-
+                  {result.refactoredCode && (
+                    <section className="overflow-hidden rounded-2xl border border-[#D9DDE8] bg-white">
+                      <h3 className="border-b border-[#D9DDE8] px-5 py-4 text-lg font-bold">Refactored code</h3>
+                      <Editor
+                        height="300px"
+                        language={language}
+                        theme="vs"
+                        value={result.refactoredCode}
+                        options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false }}
+                      />
+                    </section>
+                  )}
+                </>
+              )}
             </div>
-          )
-        )
-      }
-
-    </div>
-  )
-}
-
-{/* COMPLEXITY */}
-
-{
-  result?.complexity && (
-
-    <div
-      className="
-        rounded-3xl
-        border border-violet-500/20
-        bg-violet-500/[0.04]
-        p-6
-      "
-    >
-
-      <h3 className="text-xl font-bold mb-5">
-        Complexity Analysis
-      </h3>
-
-      <div className="grid grid-cols-2 gap-5">
-
-        <div>
-
-          <p className="text-zinc-500 text-sm">
-            Time Complexity
-          </p>
-
-          <h4 className="text-2xl font-bold mt-1">
-            {
-              result.complexity
-                ?.timeComplexity
-            }
-          </h4>
-
+          </section>
         </div>
-
-        <div>
-
-          <p className="text-zinc-500 text-sm">
-            Space Complexity
-          </p>
-
-          <h4 className="text-2xl font-bold mt-1">
-            {
-              result.complexity
-                ?.spaceComplexity
-            }
-          </h4>
-
-        </div>
-
       </div>
-
-      <p className="mt-5 text-zinc-300 leading-7">
-        {
-          result.complexity
-            ?.description
-        }
-      </p>
-
-    </div>
-  )
-}
-
-{/* REFACTORED CODE */}
-
-{
-  result?.refactoredCode && (
-
-    <div
-      className="
-        rounded-3xl
-        border border-green-500/20
-        overflow-hidden
-      "
-    >
-
-      <div
-        className="
-          px-5 py-4
-          border-b border-green-500/10
-          bg-green-500/[0.03]
-        "
-      >
-
-        <h3 className="text-xl font-bold">
-          Refactored Code
-        </h3>
-
-      </div>
-
-      <Editor
-        height="300px"
-        language={language}
-        theme="vs-dark"
-        value={
-          result.refactoredCode
-        }
-        options={{
-          readOnly: true,
-          minimap: {
-            enabled: false,
-          },
-        }}
-      />
-
-    </div>
-  )
-}
-              </>
-
-            )}
-
-          </div>
-
-        </motion.div>
-
-      </div>
-
     </div>
   );
 }
-
-

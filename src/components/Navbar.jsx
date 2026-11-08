@@ -1,23 +1,7 @@
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import {
-  Link,
-  useNavigate,
-  useLocation,
-} from 'react-router-dom';
-
-import {
-  motion,
-  AnimatePresence,
-} from 'framer-motion';
-
-import {
-  useEffect,
-  useState,
-} from 'react';
-
-import useAuth from '../hooks/useAuth';
-
-import {
-  RiCodeSSlashLine,
   RiDashboardLine,
   RiHistoryLine,
   RiUserLine,
@@ -27,749 +11,205 @@ import {
   RiShieldLine,
   RiSparklingLine,
   RiHome5Line,
+  RiGitPullRequestLine,
 } from 'react-icons/ri';
 
-// ========================================
-// NAV LINK
-// ========================================
+import useAuth from '../hooks/useAuth';
 
-const NavLink = ({
-  to,
-  icon: Icon,
-  label,
-  onClick,
-}) => {
+// Loads the font once for the whole app. Remove the copies in the pages
+// if you use this, or move this @import into index.css.
+const FONT_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap');
+.rv { font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+.rv-code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.rv :focus-visible { outline: 3px solid #4B3FFF; outline-offset: 2px; }
+`;
 
-  const location =
-    useLocation();
+// ---------- NAV LINK ----------
+// `end` makes /dashboard match only itself, so it is not highlighted
+// together with /dashboard/history.
 
-  const active =
-    location.pathname === to ||
+const NavLink = ({ to, icon: Icon, label, end = false, mobile = false }) => {
+  const { pathname } = useLocation();
+  const active = end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
 
-    location.pathname.startsWith(
-      `${to}/`
+  if (mobile) {
+    return (
+      <Link
+        to={to}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 rounded-lg px-3 py-3 font-semibold ${
+          active ? 'bg-[#E9E7FF] text-[#4B3FFF]' : 'text-[#14182B] hover:bg-[#E6E9F2]'
+        }`}
+      >
+        <Icon size={18} />
+        {label}
+      </Link>
     );
+  }
 
   return (
-
     <Link
       to={to}
-      onClick={onClick}
-      className={`
-        relative
-        flex items-center gap-2
-
-        px-4 py-2.5
-
-        rounded-xl
-
-        text-sm font-medium
-
-        transition-all duration-300
-
-        overflow-hidden
-
-        ${
-          active
-
-            ? `
-              text-cyan-400
-              bg-cyan-500/10
-            `
-
-            : `
-              text-zinc-400
-              hover:text-white
-              hover:bg-white/5
-            `
-        }
-      `}
+      aria-current={active ? 'page' : undefined}
+      className={`relative flex items-center gap-2 px-3 py-4 text-sm font-semibold ${
+        active ? 'text-[#14182B]' : 'text-[#5A6078] hover:text-[#14182B]'
+      }`}
     >
-
-      <Icon size={17} />
-
-      <span>
-        {label}
-      </span>
-
+      <Icon size={16} />
+      {label}
       {active && (
-
-        <motion.div
-          layoutId="active-nav"
-
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 30,
-          }}
-
-          className="
-            absolute inset-0
-            rounded-xl
-            border border-cyan-400/20
-            bg-cyan-500/5
-          "
+        <motion.span
+          layoutId="nav-underline"
+          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+          className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#4B3FFF]"
         />
-
       )}
-
     </Link>
   );
 };
 
-// ========================================
-// NAVBAR
-// ========================================
+// ---------- NAVBAR ----------
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
 
-  const {
-    user,
-    logout,
-  } = useAuth();
-
-  const navigate =
-    useNavigate();
-
-  const location =
-    useLocation();
-
-  const [open,
-    setOpen] =
-    useState(false);
-
-  // ========================================
-  // CLOSE MOBILE MENU
-  // ========================================
-
+  // close the mobile menu after navigating
   useEffect(() => {
-
     setOpen(false);
+  }, [pathname]);
 
-  }, [location.pathname]);
+  const handleLogout = async () => {
+    await logout();
+    localStorage.removeItem('revynix_user');
+    localStorage.removeItem('revynix_token');
+    navigate('/');
+  };
 
-  // ========================================
-  // LOGOUT
-  // ========================================
+  const links = [
+    { to: '/', icon: RiHome5Line, label: 'Home', end: true },
+    ...(user
+      ? [
+          { to: '/dashboard', icon: RiDashboardLine, label: 'Dashboard', end: true },
+          { to: '/review', icon: RiSparklingLine, label: 'AI Review' },
+          { to: '/dashboard/history', icon: RiHistoryLine, label: 'History' },
+          { to: '/dashboard/profile', icon: RiUserLine, label: 'Profile' },
+          ...(user.role === 'admin'
+            ? [{ to: '/dashboard/admin', icon: RiShieldLine, label: 'Admin' }]
+            : []),
+        ]
+      : []),
+  ];
 
-  const handleLogout =
-    async () => {
-
-      await logout();
-
-      localStorage.removeItem(
-        'revynix_user'
-      );
-
-      localStorage.removeItem(
-        'revynix_token'
-      );
-
-      navigate('/');
-    };
+  const initial = user?.name?.[0]?.toUpperCase();
 
   return (
-
     <>
-      {/* ======================================== */}
-      {/* NAVBAR */}
-      {/* ======================================== */}
+      <style>{FONT_CSS}</style>
 
-      <header
-        className="
-          fixed top-0 left-0 right-0
-          z-50
-
-          backdrop-blur-2xl
-
-          bg-black/40
-
-          border-b border-white/5
-
-          shadow-lg
-        "
-      >
-
-        <div
-          className="
-            max-w-7xl mx-auto
-
-            px-4
-
-            h-14
-
-            flex items-center justify-between
-          "
-        >
-
-          {/* ======================================== */}
+      <header className="rv fixed inset-x-0 top-0 z-50 border-b border-[#D9DDE8] bg-[#F3F5F9]/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           {/* LOGO */}
-          {/* ======================================== */}
-
-          <Link
-            to="/"
-
-            className="
-              flex items-center gap-3
-              group
-            "
-          >
-
-            <motion.div
-
-              whileHover={{
-                rotate: 8,
-                scale: 1.05,
-              }}
-
-              transition={{
-                duration: 0.3,
-              }}
-
-              className="
-                w-9 h-9
-                rounded-xl
-
-                flex items-center justify-center
-
-                shadow-xl
-              "
-
-              style={{
-                background:
-                  'linear-gradient(135deg,#7C3AED,#06B6D4)',
-              }}
-            >
-
-              <RiCodeSSlashLine
-                size={18}
-                className="text-white"
-              />
-
-            </motion.div>
-
-            <div>
-
-              <h1
-                className="
-                  text-lg
-                  font-bold
-                  tracking-tight
-                  leading-none
-                "
-              >
-
-                Revy
-                <span className="text-cyan-400">
-                  nix
-                </span>{' '}
-                AI
-
-              </h1>
-
-              <p
-                className="
-                  text-[9px]
-                  tracking-[0.25em]
-                  text-zinc-500
-                  mt-1
-                "
-              >
-                AI CODE REVIEWER
-              </p>
-
-            </div>
-
+          <Link to="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-[#14182B]">
+            <RiGitPullRequestLine size={22} className="text-[#4B3FFF]" />
+            Revynix AI
           </Link>
 
-          {/* ======================================== */}
-          {/* DESKTOP NAV */}
-          {/* ======================================== */}
-
-          <nav
-            className="
-              hidden lg:flex
-              items-center gap-2
-            "
-          >
-
-            <NavLink
-              to="/"
-              icon={RiHome5Line}
-              label="Home"
-            />
-
-            {user && (
-
-              <>
-                <NavLink
-                  to="/dashboard"
-                  icon={RiDashboardLine}
-                  label="Dashboard"
-                />
-
-                <NavLink
-                  to="/review"
-                  icon={RiSparklingLine}
-                  label="AI Review"
-                />
-
-                <NavLink
-                  to="/dashboard/history"
-                  icon={RiHistoryLine}
-                  label="History"
-                />
-
-                <NavLink
-                  to="/dashboard/profile"
-                  icon={RiUserLine}
-                  label="Profile"
-                />
-
-                {user?.role === 'admin' && (
-
-                  <NavLink
-                    to="/dashboard/admin"
-                    icon={RiShieldLine}
-                    label="Admin"
-                  />
-
-                )}
-              </>
-            )}
-
+          {/* DESKTOP LINKS */}
+          <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+            {links.map(l => (
+              <NavLink key={l.to} {...l} />
+            ))}
           </nav>
 
-          {/* ======================================== */}
           {/* RIGHT SIDE */}
-          {/* ======================================== */}
-
-          <div
-            className="
-              flex items-center gap-3
-            "
-          >
-
+          <div className="flex items-center gap-2">
             {user ? (
-
               <>
-                {/* USER */}
-
-                <div
-                  className="
-                    hidden md:flex
-                    items-center gap-3
-                  "
-                >
-
-                  {/* AVATAR */}
-
-                  <motion.div
-
-                    whileHover={{
-                      scale: 1.08,
-                    }}
-
-                    className="
-                      w-9 h-9
-                      rounded-full
-
-                      flex items-center justify-center
-
-                      text-sm
-                      font-bold
-                      text-white
-
-                      shadow-lg
-                    "
-
-                    style={{
-                      background:
-                        'linear-gradient(135deg,#7C3AED,#06B6D4)',
-                    }}
+                <div className="hidden items-center gap-3 md:flex">
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#14182B] text-sm font-bold text-white"
+                    title={user.name}
                   >
-
-                    {
-                      user?.name?.[0]?.toUpperCase()
-                    }
-
-                  </motion.div>
-
-                  {/* LOGOUT */}
-
+                    {initial}
+                  </span>
                   <button
-                    onClick={
-                      handleLogout
-                    }
-
-                    className="
-                      flex items-center gap-2
-
-                      px-4 py-2
-
-                      rounded-xl
-
-                      bg-red-500/10
-
-                      hover:bg-red-500/20
-
-                      text-red-400
-
-                      text-sm
-
-                      transition-all duration-300
-                    "
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 rounded-lg border border-[#BFC5D6] px-4 py-2 text-sm font-semibold text-[#14182B] hover:border-[#B3261E] hover:text-[#B3261E]"
                   >
-
-                    <RiLogoutBoxLine
-                      size={16}
-                    />
-
-                    Logout
-
+                    <RiLogoutBoxLine size={16} />
+                    Log out
                   </button>
-
                 </div>
 
-                {/* MOBILE MENU */}
-
                 <button
-
-                  onClick={() =>
-                    setOpen(!open)
-                  }
-
-                  className="
-                    lg:hidden
-
-                    w-10 h-10
-
-                    rounded-xl
-
-                    flex items-center justify-center
-
-                    hover:bg-white/5
-
-                    transition-all
-                  "
+                  onClick={() => setOpen(!open)}
+                  aria-label={open ? 'Close menu' : 'Open menu'}
+                  aria-expanded={open}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-[#14182B] hover:bg-[#E6E9F2] lg:hidden"
                 >
-
-                  <AnimatePresence
-                    mode="wait"
-                  >
-
-                    <motion.div
-
-                      key={open ? 'close' : 'menu'}
-
-                      initial={{
-                        opacity: 0,
-                        rotate: -90,
-                      }}
-
-                      animate={{
-                        opacity: 1,
-                        rotate: 0,
-                      }}
-
-                      exit={{
-                        opacity: 0,
-                        rotate: 90,
-                      }}
-
-                      transition={{
-                        duration: 0.2,
-                      }}
-                    >
-
-                      {open ? (
-
-                        <RiCloseLine
-                          size={22}
-                        />
-
-                      ) : (
-
-                        <RiMenu4Line
-                          size={22}
-                        />
-
-                      )}
-
-                    </motion.div>
-
-                  </AnimatePresence>
-
+                  {open ? <RiCloseLine size={22} /> : <RiMenu4Line size={22} />}
                 </button>
               </>
-
             ) : (
-
-              <div
-                className="
-                  flex items-center gap-2
-                "
-              >
-
-                <Link
-                  to="/login"
-
-                  className="
-                    px-4 py-2
-
-                    rounded-xl
-
-                    border border-white/10
-
-                    hover:bg-white/5
-
-                    text-sm
-
-                    transition-all
-                  "
-                >
-                  Login
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Link to="/login" className="rounded-lg px-3 py-2 hover:bg-[#E6E9F2]">
+                  Log in
                 </Link>
-
                 <Link
                   to="/register"
-
-                  className="
-                    px-4 py-2
-
-                    rounded-xl
-
-                    text-sm
-                    font-medium
-
-                    text-white
-
-                    shadow-lg
-
-                    transition-all duration-300
-
-                    hover:scale-[1.03]
-                  "
-
-                  style={{
-                    background:
-                      'linear-gradient(135deg,#7C3AED,#06B6D4)',
-                  }}
+                  className="rounded-lg bg-[#4B3FFF] px-4 py-2 text-white hover:bg-[#3A2FE0]"
                 >
-                  Get Started
+                  Sign up
                 </Link>
-
               </div>
-
             )}
-
           </div>
-
         </div>
 
-        {/* ======================================== */}
         {/* MOBILE MENU */}
-        {/* ======================================== */}
-
         <AnimatePresence>
-
-          {open && (
-
+          {open && user && (
             <motion.div
-
-              initial={{
-                opacity: 0,
-                y: -15,
-              }}
-
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-
-              exit={{
-                opacity: 0,
-                y: -15,
-              }}
-
-              transition={{
-                duration: 0.25,
-              }}
-
-              className="
-                lg:hidden
-
-                border-t border-white/5
-
-                bg-zinc-950/95
-
-                backdrop-blur-2xl
-              "
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="border-t border-[#D9DDE8] bg-[#F3F5F9] lg:hidden"
             >
+              <nav aria-label="Mobile" className="flex flex-col gap-1 px-4 py-3">
+                {links.map(l => (
+                  <NavLink key={l.to} {...l} mobile />
+                ))}
+              </nav>
 
-              <div
-                className="
-                  px-4 py-4
-
-                  flex flex-col gap-2
-                "
-              >
-
-                <NavLink
-                  to="/"
-                  icon={RiHome5Line}
-                  label="Home"
-                />
-
-                {user && (
-
-                  <>
-                    <NavLink
-                      to="/dashboard"
-                      icon={RiDashboardLine}
-                      label="Dashboard"
-                    />
-
-                    <NavLink
-                      to="/review"
-                      icon={RiSparklingLine}
-                      label="AI Review"
-                    />
-
-                    <NavLink
-                      to="/dashboard/history"
-                      icon={RiHistoryLine}
-                      label="History"
-                    />
-
-                    <NavLink
-                      to="/dashboard/profile"
-                      icon={RiUserLine}
-                      label="Profile"
-                    />
-
-                    {user?.role === 'admin' && (
-
-                      <NavLink
-                        to="/dashboard/admin"
-                        icon={RiShieldLine}
-                        label="Admin"
-                      />
-
-                    )}
-
-                    {/* MOBILE USER */}
-
-                    <div
-                      className="
-                        mt-4
-
-                        pt-4
-
-                        border-t border-white/5
-                      "
-                    >
-
-                      <div
-                        className="
-                          flex items-center gap-3
-
-                          mb-4
-                        "
-                      >
-
-                        <div
-                          className="
-                            w-10 h-10
-                            rounded-full
-
-                            flex items-center justify-center
-
-                            font-bold
-                            text-white
-                          "
-
-                          style={{
-                            background:
-                              'linear-gradient(135deg,#7C3AED,#06B6D4)',
-                          }}
-                        >
-
-                          {
-                            user?.name?.[0]?.toUpperCase()
-                          }
-
-                        </div>
-
-                        <div>
-
-                          <h3 className="font-semibold">
-                            {user?.name}
-                          </h3>
-
-                          <p
-                            className="
-                              text-xs
-                              text-zinc-500
-                            "
-                          >
-                            {user?.email}
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                      <button
-
-                        onClick={
-                          handleLogout
-                        }
-
-                        className="
-                          w-full
-
-                          flex items-center justify-center gap-2
-
-                          px-4 py-3
-
-                          rounded-xl
-
-                          bg-red-500/10
-
-                          hover:bg-red-500/20
-
-                          text-red-400
-
-                          transition-all
-                        "
-                      >
-
-                        <RiLogoutBoxLine
-                          size={16}
-                        />
-
-                        Logout
-
-                      </button>
-
-                    </div>
-                  </>
-
-                )}
-
+              <div className="border-t border-[#D9DDE8] px-4 py-4">
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#14182B] font-bold text-white">
+                    {initial}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-[#14182B]">{user.name}</p>
+                    <p className="truncate text-xs text-[#5A6078]">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#BFC5D6] px-4 py-3 font-semibold text-[#B3261E] hover:bg-[#FDE8E6]"
+                >
+                  <RiLogoutBoxLine size={16} />
+                  Log out
+                </button>
               </div>
-
             </motion.div>
-
           )}
-
         </AnimatePresence>
-
       </header>
 
-      {/* SPACER */}
-
+      {/* keeps page content below the fixed bar */}
       <div className="h-14" />
     </>
   );

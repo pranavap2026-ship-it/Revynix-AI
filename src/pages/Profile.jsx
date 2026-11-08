@@ -1,14 +1,5 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
-
-import {
-  motion,
-} from 'framer-motion';
-
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-
 import {
   RiUser3Line,
   RiMailLine,
@@ -21,776 +12,244 @@ import {
 } from 'react-icons/ri';
 
 import api from '../utils/api';
-
 import Loader from '../components/Loader';
-
 import useAuth from '../hooks/useAuth';
-
 import { getError } from '../utils/helpers';
 
-// ========================================
-// PROFILE PAGE
-// ========================================
+const inputCls =
+  'h-12 w-full rounded-xl border border-[#BFC5D6] bg-white pl-11 pr-4 text-[#14182B] placeholder:text-[#8A90A6] outline-none focus:border-[#4B3FFF] focus:ring-2 focus:ring-[#4B3FFF]/20 disabled:cursor-not-allowed disabled:bg-[#E6E9F2] disabled:text-[#5A6078]';
+
+const Field = ({ id, label, icon: Icon, children }) => (
+  <div>
+    <label htmlFor={id} className="mb-1.5 block text-sm font-semibold">
+      {label}
+    </label>
+    <div className="relative">
+      <Icon
+        size={18}
+        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8A90A6]"
+      />
+      {children}
+    </div>
+  </div>
+);
+
+const PasswordField = ({ id, label, name, value, onChange }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <Field id={id} label={label} icon={RiLockPasswordLine}>
+      <input
+        id={id}
+        name={name}
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        placeholder="At least 6 characters"
+        autoComplete={name === 'currentPassword' ? 'current-password' : 'new-password'}
+        className={`${inputCls} pr-12`}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6078] hover:bg-[#E6E9F2]"
+      >
+        {show ? <RiEyeOffLine /> : <RiEyeLine />}
+      </button>
+    </Field>
+  );
+};
 
 const Profile = () => {
-  const {
-    user,
-    setUser,
-  } = useAuth();
-
-  // ========================================
-  // STATES
-  // ========================================
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [showCurrentPassword,
-    setShowCurrentPassword] =
-    useState(false);
-
-  const [showNewPassword,
-    setShowNewPassword] =
-    useState(false);
-
-  const [formData, setFormData] =
-    useState({
-      name: '',
-      email: '',
-      github: '',
-      bio: '',
-      currentPassword: '',
-      newPassword: '',
-    });
-
-  // ========================================
-  // LOAD USER DATA
-  // ========================================
+  const { user, setUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    github: '',
+    bio: '',
+    currentPassword: '',
+    newPassword: '',
+  });
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name:
-          user.name || '',
-
-        email:
-          user.email || '',
-
-        github:
-          user.github || '',
-
-        bio:
-          user.bio || '',
-
+        name: user.name || '',
+        email: user.email || '',
+        github: user.github || '',
+        bio: user.bio || '',
         currentPassword: '',
-
         newPassword: '',
       });
-
       setLoading(false);
     }
   }, [user]);
 
-  // ========================================
-  // HANDLE CHANGE
-  // ========================================
-
   const handleChange = e => {
-    const {
-      name,
-      value,
-    } = e.target;
-
-    setFormData(prev => ({
-      ...prev,
-
-      [name]:
-        value,
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ========================================
-  // VALIDATION
-  // ========================================
-
   const validateForm = () => {
-
-    // NAME
-
-    if (
-      !formData.name.trim()
-    ) {
-      toast.error(
-        'Name is required'
-      );
-
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
       return false;
     }
-
-    // PASSWORD VALIDATION
-
-    if (
-      formData.newPassword &&
-      formData.newPassword.length < 6
-    ) {
-      toast.error(
-        'Password must be at least 6 characters'
-      );
-
+    if (formData.newPassword && formData.newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
       return false;
     }
-
-    if (
-      formData.newPassword &&
-      !formData.currentPassword
-    ) {
-      toast.error(
-        'Enter current password'
-      );
-
+    if (formData.newPassword && !formData.currentPassword) {
+      toast.error('Enter your current password');
       return false;
     }
-
     return true;
   };
 
-  // ========================================
-  // UPDATE PROFILE
-  // ========================================
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  const handleSubmit =
-    async e => {
-      e.preventDefault();
+    try {
+      setSaving(true);
 
-      if (!validateForm()) {
-        return;
+      const payload = {
+        name: formData.name.trim(),
+        github: formData.github.trim(),
+        bio: formData.bio.trim(),
+      };
+      if (formData.currentPassword && formData.newPassword) {
+        payload.currentPassword = formData.currentPassword;
+        payload.newPassword = formData.newPassword;
       }
 
-      try {
-        setSaving(true);
+      const { data } = await api.put('/auth/profile', payload);
 
-        const payload = {
-          name:
-            formData.name.trim(),
+      localStorage.setItem('user', JSON.stringify(data.data));
+      setUser(data.data);
+      setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '' }));
+      toast.success('Profile updated');
+    } catch (error) {
+      console.error(error);
+      toast.error(getError(error));
+    } finally {
+      setSaving(false);
+    }
+  };
 
-          github:
-            formData.github.trim(),
+  if (loading) return <Loader />;
 
-          bio:
-            formData.bio.trim(),
-        };
-
-        // PASSWORD UPDATE
-
-        if (
-          formData.currentPassword &&
-          formData.newPassword
-        ) {
-          payload.currentPassword =
-            formData.currentPassword;
-
-          payload.newPassword =
-            formData.newPassword;
-        }
-
-        const { data } =
-          await api.put(
-            '/auth/profile',
-            payload
-          );
-
-        // UPDATE LOCAL STORAGE
-
-        localStorage.setItem(
-          'user',
-          JSON.stringify(
-            data.data
-          )
-        );
-
-        // UPDATE CONTEXT
-
-        setUser(data.data);
-
-        // RESET PASSWORDS
-
-        setFormData(prev => ({
-          ...prev,
-
-          currentPassword: '',
-
-          newPassword: '',
-        }));
-
-        toast.success(
-          'Profile updated successfully'
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        toast.error(
-          getError(error)
-        );
-
-      } finally {
-
-        setSaving(false);
-      }
-    };
-
-  // ========================================
-  // LOADING
-  // ========================================
-
-  if (loading) {
-    return <Loader />;
-  }
-
-  // ========================================
-  // UI
-  // ========================================
+  const since = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="rv min-h-screen bg-[#F3F5F9] text-[#14182B]">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Profile settings</h1>
 
-      {/* HEADER */}
-
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: -20,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.4,
-        }}
-        className="mb-8"
-      >
-        <h1 className="
-          text-4xl
-          font-bold
-          text-white
-          mb-2
-        ">
-          Profile Settings
-        </h1>
-
-        <p className="text-zinc-400">
-          Manage your account
-          information and security.
-        </p>
-      </motion.div>
-
-      {/* CARD */}
-
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: 30,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.4,
-        }}
-        className="
-          card
-          border border-white/10
-          bg-zinc-900/70
-          backdrop-blur-xl
-          rounded-3xl
-          p-8
-          shadow-2xl
-        "
-      >
-
-        {/* PROFILE TOP */}
-
-        <div className="
-          flex flex-col md:flex-row
-          md:items-center
-          gap-6
-          mb-10
-        ">
-
-          {/* AVATAR */}
-
-          <div
-            className="
-              w-28 h-28
-              rounded-full
-              flex items-center
-              justify-center
-              text-4xl
-              font-bold
-              text-white
-              shadow-xl
-            "
-            style={{
-              background:
-                'linear-gradient(135deg,#14b8a6,#0f766e)',
-            }}
-          >
+        {/* WHO YOU ARE */}
+        <div className="mt-8 flex items-center gap-5">
+          <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#14182B] text-3xl font-bold text-white">
             {user?.name?.[0]?.toUpperCase()}
-          </div>
-
-          {/* USER INFO */}
-
-          <div>
-
-            <div className="
-              flex items-center
-              gap-3
-              mb-2
-            ">
-              <h2 className="
-                text-2xl
-                font-bold
-                text-white
-              ">
-                {user?.name}
-              </h2>
-
-              {user?.role ===
-                'admin' && (
-                <span className="
-                  flex items-center
-                  gap-1
-                  text-xs
-                  bg-cyan-500/20
-                  text-cyan-400
-                  px-3 py-1
-                  rounded-full
-                ">
-                  <RiShieldCheckLine
-                    size={14}
-                  />
-
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="truncate text-2xl font-bold">{user?.name}</h2>
+              {user?.role === 'admin' && (
+                <span className="flex items-center gap-1 rounded-md bg-[#E9E7FF] px-2.5 py-1 text-xs font-semibold text-[#4B3FFF]">
+                  <RiShieldCheckLine size={14} />
                   Admin
                 </span>
               )}
             </div>
-
-            <p className="text-zinc-400 mb-1">
-              {user?.email}
-            </p>
-
-            <p className="
-              text-sm
-              text-zinc-500
-            ">
-              Member since{' '}
-              {new Date(
-                user?.createdAt
-              ).toLocaleDateString()}
-            </p>
-
+            <p className="truncate text-[#4A5068]">{user?.email}</p>
+            {since && <p className="text-sm text-[#5A6078]">Member since {since}</p>}
           </div>
         </div>
 
-        {/* FORM */}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {/* ACCOUNT */}
+          <section className="space-y-5 rounded-2xl border border-[#D9DDE8] bg-white p-5 sm:p-7">
+            <h3 className="text-lg font-bold">Account</h3>
 
-        <form
-          onSubmit={
-            handleSubmit
-          }
-          className="space-y-6"
-        >
-
-          {/* NAME */}
-
-          <div>
-            <label className="label">
-              Full Name
-            </label>
-
-            <div className="relative">
-
-              <RiUser3Line
-                size={18}
-                className="
-                  absolute
-                  left-4
-                  top-1/2
-                  -translate-y-1/2
-                  text-zinc-500
-                "
-              />
-
+            <Field id="name" label="Full name" icon={RiUser3Line}>
               <input
-                type="text"
+                id="name"
                 name="name"
-                value={
-                  formData.name
-                }
-                onChange={
-                  handleChange
-                }
-                className="
-  w-full
-  bg-zinc-900/80
-  border border-white/10
-  rounded-2xl
-  h-14
-  px-14
-  text-white
-  placeholder:text-zinc-500
-  outline-none
-  transition-all
-  focus:border-cyan-500/50
-  focus:ring-2
-  focus:ring-cyan-500/20
-"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
                 placeholder="Your name"
                 required
+                className={inputCls}
               />
-            </div>
-          </div>
+            </Field>
 
-          {/* EMAIL */}
+            <Field id="email" label="Email address (cannot be changed)" icon={RiMailLine}>
+              <input id="email" type="email" value={formData.email} disabled className={inputCls} />
+            </Field>
 
-          <div>
-            <label className="label">
-              Email Address
-            </label>
-
-            <div className="relative">
-
-              <RiMailLine
-                size={18}
-                className="
-                  absolute
-                  left-4
-                  top-1/2
-                  -translate-y-1/2
-                  text-zinc-500
-                "
-              />
-
+            <Field id="github" label="GitHub profile" icon={RiGithubLine}>
               <input
-                type="email"
-                value={
-                  formData.email
-                }
-                disabled
-                className="
-  w-full
-  bg-zinc-900/60
-  border border-white/10
-  rounded-2xl
-  h-14
-  px-14
-  text-zinc-400
-  opacity-70
-  cursor-not-allowed
-"
-              />
-            </div>
-          </div>
-
-          {/* GITHUB */}
-
-          <div>
-            <label className="label">
-              GitHub Profile
-            </label>
-
-            <div className="relative">
-
-              <RiGithubLine
-                size={18}
-                className="
-                  absolute
-                  left-4
-                  top-1/2
-                  -translate-y-1/2
-                  text-zinc-500
-                "
-              />
-
-              <input
-                type="url"
+                id="github"
                 name="github"
-                value={
-                  formData.github
-                }
-                onChange={
-                  handleChange
-                }
-                className="
-  w-full
-  bg-zinc-900/80
-  border border-white/10
-  rounded-2xl
-  h-14
-  px-14
-  text-white
-  placeholder:text-zinc-500
-  outline-none
-  transition-all
-  focus:border-cyan-500/50
-  focus:ring-2
-  focus:ring-cyan-500/20
-"
+                type="url"
+                value={formData.github}
+                onChange={handleChange}
                 placeholder="https://github.com/username"
+                className={inputCls}
+              />
+            </Field>
+
+            <div>
+              <label htmlFor="bio" className="mb-1.5 block text-sm font-semibold">
+                Bio
+              </label>
+              <textarea
+                id="bio"
+                name="bio"
+                rows="4"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell us about yourself"
+                className="w-full resize-none rounded-xl border border-[#BFC5D6] bg-white px-4 py-3 outline-none placeholder:text-[#8A90A6] focus:border-[#4B3FFF] focus:ring-2 focus:ring-[#4B3FFF]/20"
               />
             </div>
-          </div>
+          </section>
 
-          {/* BIO */}
-
-          <div>
-            <label className="label">
-              Bio
-            </label>
-
-            <textarea
-              name="bio"
-              rows="4"
-              value={
-                formData.bio
-              }
-              onChange={
-                handleChange
-              }
-             className="
-  w-full
-  bg-zinc-900/80
-  border border-white/10
-  rounded-2xl
-  px-5 py-4
-  text-white
-  placeholder:text-zinc-500
-  outline-none
-  transition-all
-  focus:border-cyan-500/50
-  focus:ring-2
-  focus:ring-cyan-500/20
-  resize-none
-"
-              placeholder="Tell us about yourself..."
-            />
-          </div>
-
-          {/* PASSWORD SECTION */}
-
-          <div className="
-            pt-6
-            border-t
-            border-white/10
-          ">
-
-            <h3 className="
-              text-lg
-              font-semibold
-              mb-5
-              text-white
-            ">
-              Change Password
-            </h3>
-
-            <div className="
-              grid
-              md:grid-cols-2
-              gap-5
-            ">
-
-              {/* CURRENT PASSWORD */}
-
-              <div>
-
-                <label className="label">
-                  Current Password
-                </label>
-
-                <div className="relative">
-
-                  <RiLockPasswordLine
-                    size={18}
-                    className="
-                      absolute
-                      left-4
-                      top-1/2
-                      -translate-y-1/2
-                      text-zinc-500
-                    "
-                  />
-
-                  <input
-                    type={
-                      showCurrentPassword
-                        ? 'text'
-                        : 'password'
-                    }
-                    name="currentPassword"
-                    value={
-                      formData.currentPassword
-                    }
-                    onChange={
-                      handleChange
-                    }
-                   className="
-  w-full
-  bg-zinc-900/80
-  border border-white/10
-  rounded-2xl
-  h-14
-  pl-14
-  pr-14
-  text-white
-  placeholder:text-zinc-500
-  outline-none
-  transition-all
-  focus:border-cyan-500/50
-  focus:ring-2
-  focus:ring-cyan-500/20
-"
-                    placeholder="••••••••"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowCurrentPassword(
-                        !showCurrentPassword
-                      )
-                    }
-                    className="
-                      absolute
-                      right-4
-                      top-1/2
-                      -translate-y-1/2
-                      text-zinc-500
-                    "
-                  >
-                    {showCurrentPassword
-                      ? <RiEyeOffLine />
-                      : <RiEyeLine />
-                    }
-                  </button>
-
-                </div>
-              </div>
-
-              {/* NEW PASSWORD */}
-
-              <div>
-
-                <label className="label">
-                  New Password
-                </label>
-
-                <div className="relative">
-
-                  <RiLockPasswordLine
-                    size={18}
-                    className="
-                      absolute
-                      left-4
-                      top-1/2
-                      -translate-y-1/2
-                      text-zinc-500
-                    "
-                  />
-
-                  <input
-                    type={
-                      showNewPassword
-                        ? 'text'
-                        : 'password'
-                    }
-                    name="newPassword"
-                    value={
-                      formData.newPassword
-                    }
-                    onChange={
-                      handleChange
-                    }
-                   className="
-  w-full
-  bg-zinc-900/80
-  border border-white/10
-  rounded-2xl
-  h-14
-  pl-14
-  pr-14
-  text-white
-  placeholder:text-zinc-500
-  outline-none
-  transition-all
-  focus:border-cyan-500/50
-  focus:ring-2
-  focus:ring-cyan-500/20
-"
-                    placeholder="••••••••"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowNewPassword(
-                        !showNewPassword
-                      )
-                    }
-                    className="
-                      absolute
-                      right-4
-                      top-1/2
-                      -translate-y-1/2
-                      text-zinc-500
-                    "
-                  >
-                    {showNewPassword
-                      ? <RiEyeOffLine />
-                      : <RiEyeLine />
-                    }
-                  </button>
-
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* BUTTON */}
-
-          <div className="pt-4">
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="
-                btn-primary
-                px-6 py-3
-                flex items-center
-                gap-2
-                disabled:opacity-50
-                disabled:cursor-not-allowed
-              "
-            >
-
-              <RiSaveLine
-                size={18}
+          {/* PASSWORD */}
+          <section className="rounded-2xl border border-[#D9DDE8] bg-white p-5 sm:p-7">
+            <h3 className="text-lg font-bold">Change password</h3>
+            <p className="mt-1 text-sm text-[#5A6078]">Leave both fields empty to keep your current password.</p>
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
+              <PasswordField
+                id="currentPassword"
+                label="Current password"
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={handleChange}
               />
+              <PasswordField
+                id="newPassword"
+                label="New password"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+              />
+            </div>
+          </section>
 
-              {saving
-                ? 'Saving...'
-                : 'Save Changes'}
-
-            </button>
-          </div>
-
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-[#4B3FFF] px-7 py-3.5 font-semibold text-white hover:bg-[#3A2FE0] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RiSaveLine size={18} />
+            {saving ? 'Saving...' : 'Save changes'}
+          </button>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 };
